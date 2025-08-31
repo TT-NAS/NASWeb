@@ -1,0 +1,92 @@
+:root{
+  --primary-color: #773ec7;
+  --secondary-color: #000;
+  --third-color: #2D2D2D;
+  --contrast-color: #FFF;
+  --focus-color: #4b267e;
+  --gray-color: #7B7B7B;
+}
+
+::selection {
+  background: var(--primary-color); /* color de fondo */
+  color: var(--contrast-colors); /* color del texto */
+}
+
+a{
+  color: var(--contrast-color)
+}
+
+body{
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--secondary-color) 60%, var(--primary-color) 120%);
+  color: var(--contrast-color) !important;
+}
+
+.bg-primary{
+  background-color: var(--primary-color) !important;
+}
+
+.card{
+  color: var(--contrast-color);
+  background-color: var(--third-color);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.2); /* Fondo semitransparente */
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.3); /* Borde sutil */
+  backdrop-filter: blur(8px); /* El efecto "glass" */
+  -webkit-backdrop-filter: blur(10px); /* Safari */
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); /* Sombras suaves */
+}
+
+.text-primary{
+  color: var(--primary-color) !important;
+}
+
+a.btn.btn-primary, button.btn.btn-primary {
+  background: var(--primary-color) !important;
+  color: var(--contrast-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+a.btn.btn-primary:hover, button.btn.btn-primary:hover {
+  background: var(--focus-color) !important;
+  border-color: var(--focus-color) !important;
+}
+
+a.btn.btn-primary:active, button.btn.btn-primary:active {
+  background-color: var(--focus-color) !important;
+  color: var(--contrast-color) !important;
+  border-color: var(--focus-color) !important;
+  box-shadow: none;
+}
+
+.form-range{
+  background-color: rgba(255, 255, 255, 0) !important;
+}
+
+.form-range::-webkit-slider-thumb {
+  background: var(--primary-color);
+  border: 1px solid var(--contrast-color);
+}
+
+.form-range::-moz-range-thumb {
+  background: var(--primary-color);
+  border: 2px solid var(--contrast-color);
+}
+
+.form-range::-ms-thumb {
+  background: var(--primary-color);
+  border: 2px solid var(--contrast-color);
+}
+
+.checkbox-purple {
+  accent-color: var(--primary-color) !important;
+}
+
+/* Checkbox Bootstrap personalizado en morado */
+.form-check-input.checkbox-purple:checked {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
