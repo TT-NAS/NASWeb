@@ -9,7 +9,7 @@
           <!-- Grid in card -->
           <div class="row">
             <div class="col-md">
-              <form action="">
+              <div>
                 <div class="mb-3">
                   <label for="range-population-size" class="form-label">Tamaño de la población: <output for="range-population-size" id="range-population-size-value" aria-hidden="true"></output></label>
                   <input type="range" class="form-range" min="0" max="100" value="50" id="range-population-size">
@@ -44,13 +44,20 @@
                 </div>
 
                 <div class="d-grid gap-2">
-                  <button class="btn btn-primary mt-4">Iniciar búsqueda</button>
+                  <button class="btn btn-primary mt-4" id="button-start">Iniciar búsqueda</button>
                 </div>
-              </form>
+              </div>
             </div>
             <div class="col-md">
               <div class="card p-1 bg-light mt-2" >
                 <div id="animation" style="width: auto; height: 300px"></div>
+              </div>
+              <div class="mt-2">
+                <!-- Results -->
+                <p>IOU: <span id="result-iou">--</span></p>
+                <p>Tiempo de búsqueda: <span id="result-search-time">--</span></p>
+                <p>Generación alcanzada: <span id="result-generation">--</span></p>
+                <p>Razón de detenimiento: <span id="result-stop-reason">--</span></p>
               </div>
             </div>
           </div>
@@ -93,3 +100,4 @@
 </script>
 
 <%- include('./partials/_footer') %>
+<script src="/js/start.form.js"></script>
