@@ -4,66 +4,98 @@
   
   <div class="container py-5">
     <div class="row">
-      <div class="col">
-        <div class="card p-4 glass-card">
+      <div class="col-md-8">
+        <!-- Animation card -->
+        <div class="card glass-card p-4">
+          <nav class="nav nav-pills flex-column flex-sm-row mb-1">
+            <a class="flex-sm-fill text-sm-center nav-link active" aria-current="page" href="#">Arquitectura</a>
+            <a class="flex-sm-fill text-sm-center nav-link" href="#">Convergencia</a>
+            <a class="flex-sm-fill text-sm-center nav-link" href="#">Frente de pareto</a>
+          </nav>
+          <div class="card p-1 bg-light" >
+            <div id="animation" style="width: auto; height: 300px"></div>
+          </div>
+        </div>
+
+        <div class="card p-4 glass-card mt-4">
           <!-- Grid in card -->
-          <div class="row">
-            <div class="col-md">
-              <div>
-                <div class="mb-3">
-                  <label for="range-population-size" class="form-label">Tamaño de la población: <output for="range-population-size" id="range-population-size-value" aria-hidden="true"></output></label>
-                  <input type="range" class="form-range" min="0" max="100" value="50" id="range-population-size">
-                </div>
-
-
-                <div class="mb-3">
-                  <label for="range-f" class="form-label">F: <output for="range-f" id="range-f-value" aria-hidden="true"></output></label>
-                  <input type="range" class="form-range" min="0" max="2" step="0.01" value="0.5" id="range-f">
-                </div>
-
-                <div class="mb-3">
-                  <label for="range-crossover" class="form-label">Tasa de cruza: <output for="range-crossover" id="range-crossover-value" aria-hidden="true"></output></label>
-                  <input type="range" class="form-range" min="0" max="1" step="0.01" value="0.5" id="range-crossover">
-                </div>
-
-                <div class="mb-3">
-                  <label for="range-mutation" class="form-label">Tasa de mutación: <output for="range-mutation" id="range-mutation-value" aria-hidden="true"></output></label>
-                  <input type="range" class="form-range" min="0" max="1" step="0.01" value="0.01" id="range-mutation">
-                </div>
-
-                <div class="mb-3">
-                  <label for="range-generations" class="form-label">Generaciones: <output for="range-generations" id="range-generations-value" aria-hidden="true"></output></label>
-                  <input type="range" class="form-range" min="1" max="1000" value="100" id="range-generations">
-                </div>
-
-                <div class="form-check">
-                  <input type="checkbox" class="form-check-input checkbox-purple" id="checkbox">
-                  <label for="checkbox" class="form-check-label">
-                    Entrenar arquitectura final
-                  </label>
-                </div>
-
-                <div class="d-grid gap-2">
-                  <button class="btn btn-primary mt-4" id="button-start">Iniciar búsqueda</button>
-                </div>
+          <div class="col-md">
+            <div>
+              <div class="">
+                <label for="range-population-size" class="form-label">Tamaño de la población: <output for="range-population-size" id="range-population-size-value" aria-hidden="true"></output></label>
+                <input type="range" class="form-range" min="0" max="100" value="50" id="range-population-size">
               </div>
-            </div>
-            <div class="col-md">
-              <div class="card p-1 bg-light mt-2" >
-                <div id="animation" style="width: auto; height: 300px"></div>
+
+              <div class="">
+                <label for="range-f" class="form-label">F: <output for="range-f" id="range-f-value" aria-hidden="true"></output></label>
+                <input type="range" class="form-range" min="0" max="2" step="0.01" value="0.5" id="range-f">
               </div>
-              <div class="mt-2">
-                <!-- Results -->
-                <p>IOU: <span id="result-iou">--</span></p>
-                <p>Tiempo de búsqueda: <span id="result-search-time">--</span></p>
-                <p>Generación alcanzada: <span id="result-generation">--</span></p>
-                <p>Razón de detenimiento: <span id="result-stop-reason">--</span></p>
+
+              <div class="">
+                <label for="range-crossover" class="form-label">Tasa de cruza: <output for="range-crossover" id="range-crossover-value" aria-hidden="true"></output></label>
+                <input type="range" class="form-range" min="0" max="1" step="0.01" value="0.5" id="range-crossover">
+              </div>
+
+              <div class="">
+                <label for="range-mutation" class="form-label">Tasa de mutación: <output for="range-mutation" id="range-mutation-value" aria-hidden="true"></output></label>
+                <input type="range" class="form-range" min="0" max="1" step="0.01" value="0.01" id="range-mutation">
+              </div>
+
+              <div class="">
+                <label for="range-generations" class="form-label">Generaciones: <output for="range-generations" id="range-generations-value" aria-hidden="true"></output></label>
+                <input type="range" class="form-range" min="1" max="1000" value="100" id="range-generations">
+              </div>
+
+              <div class="d-grid gap-2">
+                <button class="btn btn-primary mt-3" id="button-start">Iniciar búsqueda</button>
               </div>
             </div>
           </div>
         </div>
       </div>
+      
+      <div class="col">
+        <!-- Results card -->
+        <div class="card glass-card p-4">
+          <span class="fs-4">Resultados de la búsqueda</span>
+          <hr>
+          <p>IOU: <span id="result-iou">--</span></p>
+          <p>Tiempo de búsqueda: <span id="result-search-time">--</span></p>
+          <p>Generación alcanzada: <span id="result-generation">--</span></p>
+          <p>Razón de detenimiento: <span id="result-stop-reason">--</span></p>
+          <button class="btn btn-primary" disabled>Descargar arquitectura <i class="bi bi-file-earmark-arrow-down-fill"></i></button>
+        </div>
+
+        <!-- Training card -->
+        <div class="card glass-card p-4 mt-4">
+          <span class="fs-4">Entrenamiento de la arquitectura</span>
+          <hr>
+          <!-- Form -->
+          <div>
+            <div class="mb-1">
+              <label for="form-label">Seleccionar conjunto de datos: </label>
+              <select name="dataset" id="dataset-select" class="form-select">
+                <option value="road">Caminos</option>
+                <option value="car">Carros</option>
+              </select>
+            </div>
+            <div class="mb-1">
+              <label for="" class="form-label">Tamaño del dataset:</label>
+              <input type="number" value="100" class="form-control" min="10" max="1000" step="100">
+            </div>
+            <div class="mb-1">
+              <label for="" class="form-label">Epocas:</label>
+              <input type="number" class="form-control" min="1" max="35" value="10">
+            </div>
+            <div class="d-grid gap-2 mt-3">
+              <button class="btn btn-primary" disabled>Entrenar arquitectura</button>
+              <button class="btn btn-outline-primary">Cargar arquitectura <i class="bi bi-file-earmark-arrow-up-fill"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+
   </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>

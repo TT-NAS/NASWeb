@@ -5,6 +5,7 @@
   --contrast-color: #FFF;
   --focus-color: #4b267e;
   --gray-color: #7B7B7B;
+  --primary-light-color: #b691e2;
 }
 
 ::selection {
@@ -62,6 +63,39 @@ a.btn.btn-primary:active, button.btn.btn-primary:active {
   box-shadow: none;
 }
 
+a.btn.btn-outline-primary,
+button.btn.btn-outline-primary {
+  background-color: transparent !important;
+  color: var(--primary-light-color) !important;
+  border-color: var(--primary-color) !important;
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+a.btn.btn-outline-primary:hover,
+button.btn.btn-outline-primary:hover {
+  background-color: var(--primary-color) !important;
+  color: var(--contrast-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+a.btn.btn-outline-primary:focus,
+button.btn.btn-outline-primary:focus,
+a.btn.btn-outline-primary:focus-visible,
+button.btn.btn-outline-primary:focus-visible {
+  background-color: transparent !important;
+  color: var(--focus-color) !important;
+  border-color: var(--focus-color) !important;
+  box-shadow: 0 0 0 0.25rem rgba(119, 62, 199, 0.25);
+}
+
+a.btn.btn-outline-primary:active,
+button.btn.btn-outline-primary:active {
+  background-color: var(--primary-color) !important;
+  color: var(--contrast-color) !important;
+  border-color: var(--focus-color) !important;
+  box-shadow: none;
+}
+
 .form-range{
   background-color: rgba(255, 255, 255, 0) !important;
 }
@@ -89,4 +123,66 @@ a.btn.btn-primary:active, button.btn.btn-primary:active {
 .form-check-input.checkbox-purple:checked {
   background-color: var(--primary-color);
   border-color: var(--primary-color);
+}
+
+hr{
+  color: #FFF;
+}
+
+/* Darker "glass" inputs to match glass-card but more opaque/darker with white text */
+.form-control,
+.form-select {
+  background: rgba(0, 0, 0, 0.30) !important; /* más oscuro que .glass-card */
+  color: var(--contrast-color) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important; /* sutil borde claro */
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  box-shadow: none !important;
+}
+
+.form-control::placeholder,
+.form-select::placeholder {
+  color: rgba(255,255,255,0.75) !important;
+  opacity: 1; /* en algunos navegadores el placeholder tiene menos opacidad */
+}
+
+.form-control:focus,
+.form-select:focus {
+  background: rgba(0, 0, 0, 0.28) !important; /* ligeramente más claro en focus */
+  color: var(--contrast-color) !important;
+  border-color: var(--primary-color) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 0.2rem rgba(119, 62, 199, 0.18) !important;
+}
+
+.form-control[disabled],
+.form-select[disabled],
+.form-control:disabled,
+.form-select:disabled {
+  opacity: 0.7 !important;
+  background: rgba(0,0,0,0.24) !important;
+  color: rgba(255,255,255,0.85) !important;
+}
+
+/* Small adjustment for number inputs inside form-control to keep text white */
+input[type="number"].form-control {
+  color: var(--contrast-color) !important;
+}
+
+
+/* For nav-tab */
+.nav-link.active {
+  background-color: var(--primary-color) !important;
+  color: var(--contrast-color) !important;
+  border: none !important;
+}
+
+/* Non-active nav links should be subtle (white-ish) to match the glass background. .active keeps the purple background + white text. */
+.nav-link:not(.active) {
+  color: rgba(255,255,255,0.85) !important;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.nav-link:not(.active):hover {
+  color: var(--primary-light-color) !important;
 }
