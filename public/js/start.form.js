@@ -31,6 +31,11 @@ const resultSearchTime = document.getElementById("result-search-time")
 const resultGeneration = document.getElementById("result-generation")
 const resultStopReason = document.getElementById("result-stop-reason")
 
+const downloadButton = document.getElementById("button-download")
+const downloadJsonButton = document.getElementById("a-download-json")
+
+const trainingButton = document.getElementById("button-training")
+
 /**
  * Normaliza un valor para su visualización en la interfaz, aplicando formato numérico cuando procede.
  * @param {*} value - Valor recibido desde la API.
@@ -129,6 +134,11 @@ const startSearch = async () => {
     // Muestra los resultados
     renderResults(data)
     console.log(data);
+    // Guarda el cromosoma en la sesión
+    sessionStorage.setItem("best_cromosoma", JSON.stringify(data.results, null, 2))
+    // activa la descarga y el entrenamiento
+    downloadButton.disabled = false
+    trainingButton.disabled = false
   } catch (e) {
     console.error(e)
     Notiflix.Report.failure(
@@ -142,6 +152,37 @@ const startSearch = async () => {
   }
 }
 
+/**
+ * Crea un dcoumento json con los datos del cromosoma encontrado y lo descarga
+ */
+function downloadJson() {
+  const json_data = sessionStorage.getItem("best_cromosoma")
+  const blob = new Blob([json_data], { type: "application/json" })
+  // crea una url temporal
+  const url = URL.createObjectURL(blob)
+  // crea un enlace invisible
+  const a = document.createElement("a")
+  a.href = url
+  a.download = "cromosoma.json" //nombre del archivo
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  // liberar memoria
+  URL.revokeObjectURL(url)
+}
 
 // Reactions
 start_button.addEventListener("click", () => startSearch())
+downloadJsonButton.addEventListener("click", () => downloadJson())
+
+// Eleva la tarjeta de resultados cuando su dropdown está abierto para evitar que quede oculta.
+document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach((toggle) => {
+  const targetCard = toggle.closest(".glass-card");
+  if (!targetCard) return;
+  toggle.addEventListener("show.bs.dropdown", () => {
+    targetCard.classList.add("dropdown-open");
+  });
+  toggle.addEventListener("hide.bs.dropdown", () => {
+    targetCard.classList.remove("dropdown-open");
+  });
+});

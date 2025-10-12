@@ -39,6 +39,12 @@ body{
   backdrop-filter: blur(8px); /* El efecto "glass" */
   -webkit-backdrop-filter: blur(10px); /* Safari */
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); /* Sombras suaves */
+  position: relative;
+  overflow: visible;
+}
+
+.glass-card.dropdown-open {
+  z-index: 2000;
 }
 
 .text-primary{
