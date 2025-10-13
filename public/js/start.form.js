@@ -1,3 +1,4 @@
+// Defaults
 // Este script vincula los controles de tipo 'range' del formulario con sus salidas <output>,
 // mostrando dinámicamente el valor seleccionado por el usuario en cada control.
 // Facilita la visualización en tiempo real de los parámetros configurados en el formulario.
@@ -34,6 +35,12 @@ const downloadButton = document.getElementById("button-download")
 const downloadJsonButton = document.getElementById("a-download-json")
 
 const trainingButton = document.getElementById("button-training")
+const parametersButton = document.getElementById("button-parameters_train")
+const resultsTrainButton = document.getElementById("button-results_train")
+const containerTrainParameters = document.getElementById("container-train-parameters")
+const containerTrainResults = document.getElementById("container-train-results")
+
+//Functions 
 
 /**
  * Normaliza un valor para su visualización en la interfaz, aplicando formato numérico cuando procede.
@@ -95,7 +102,6 @@ const renderResults = (payload = {}) => {
   }
 }
 
-// Functions
 /**
  * Recoge los parámetros del formulario, inicia la búsqueda en el backend y actualiza los resultados mostrados.
  * Gestiona estados de carga y errores para ofrecer retroalimentación al usuario.
@@ -170,6 +176,24 @@ function downloadJson() {
   URL.revokeObjectURL(url)
 }
 
+/**
+ * Muestra los resultados del entrenamiento en contenedor
+ * @param {Object} results Resultados del entrenamiento de la arquitectura
+ */
+function showTrainingResults(results) {
+  const iou_train = document.getElementById("result-train-iou")
+  const iou_val = document.getElementById("result-train-iou_val")
+  const time = document.getElementById("result-train-time")
+  const epoch = document.getElementById("result-train-epoch")
+
+  iou_train.textContent = normalizeValue(results?.training_iou ?? "Error de carga", {decimals: 4});
+  iou_val.textContent = normalizeValue(results?.validation_iou ?? "Error de carga", {decimals: 4});
+  time.textContent = normalizeValue(results?.training_time ?? "Error de carga", {decimals: 4});
+  epoch.textContent = normalizeValue(results?.last_epoch ?? "Error de carga");
+
+  resultsTrainButton.click();
+}
+
 async function startTraining() {
   // toma los valores de los input
   const data_loader = document.getElementById("select-dataset").value
@@ -195,6 +219,7 @@ async function startTraining() {
     }
     const results = await res.json()
     // muestra los resultados
+    showTrainingResults(results)
     console.log(results)
   } catch (e) {
     console.error(e)
@@ -208,10 +233,28 @@ async function startTraining() {
   }
 }
 
+/**
+ * Cambia entre la vista de resultados y parámetros de búsqueda
+ * @param {string} toActive Dice que contenedor se debe mostrar
+ */
+function changeTrainingDisplay(toActive) {
+  if (toActive === "results") {
+    containerTrainResults.style.display = "block"
+    containerTrainParameters.style.display = "none"
+  } else if (toActive === "parameters") {
+    containerTrainResults.style.display = "none"
+    containerTrainParameters.style.display = "block"
+  }
+  parametersButton.classList.toggle("active")
+  resultsTrainButton.classList.toggle("active")
+}
+
 // Reactions
 start_button.addEventListener("click", () => startSearch())
 downloadJsonButton.addEventListener("click", () => downloadJson())
 trainingButton.addEventListener("click", () => startTraining())
+parametersButton.addEventListener("click", () => changeTrainingDisplay("parameters"))
+resultsTrainButton.addEventListener("click", () => changeTrainingDisplay("results"))
 
 // Eleva la tarjeta de resultados cuando su dropdown está abierto para evitar que quede oculta.
 document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach((toggle) => {
@@ -224,3 +267,11 @@ document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach((toggle) => {
     targetCard.classList.remove("dropdown-open");
   });
 });
+
+
+// Defaults
+document.addEventListener("DOMContentLoaded", () => {
+  (() => {
+    containerTrainResults.style.display = "none"
+  })();
+})

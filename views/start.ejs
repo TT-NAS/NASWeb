@@ -78,8 +78,12 @@
         <div class="card glass-card p-4 mt-4">
           <span class="fs-4">Entrenamiento de la arquitectura</span>
           <hr>
+          <nav class="nav nav-pills flex-column flex-sm-row mb-2">
+            <a class="flex-sm-fill text-sm-center nav-link active" aria-current="page" href="#" id="button-parameters_train">Parámetros</a>
+            <a class="flex-sm-fill text-sm-center nav-link" href="#" id="button-results_train">Resultados</a>
+          </nav>
           <!-- Form -->
-          <div>
+          <div id="container-train-parameters" class="">
             <div class="mb-1">
               <label for="form-label">Seleccionar conjunto de datos: </label>
               <select name="dataset" id="select-dataset" class="form-select">
@@ -99,6 +103,12 @@
               <button class="btn btn-primary" id="button-training" disabled>Entrenar arquitectura</button>
               <button class="btn btn-outline-primary">Cargar arquitectura <i class="bi bi-file-earmark-arrow-up-fill"></i></button>
             </div>
+          </div>
+          <div class="" id="container-train-results">
+            <p>IOU de entrenamiento: <span id="result-train-iou">--</span></p>
+            <p>IOU de validación: <span id="result-train-iou_val">--</span></p>
+            <p>Tiempo de entrenamiento: <span id="result-train-time">--</span></p>
+            <p>Epoca alcanzada: <span id="result-train-epoch">--</span></p>
           </div>
         </div>
       </div>
