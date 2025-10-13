@@ -39,8 +39,11 @@ actions.api_train = async (req, res) => {
         body: JSON.stringify(body)
       }
     )
+    if (!response.ok) {
+      throw new Error(`Solicitud fallida con código ${response.status}`)
+    }
     const results = await response.json()
-    return results
+    return res.json(results)
   } catch (e) {
     console.error("Error al intentar entrenar la arquitectura\n", e)
     return res.status(500).json({error: "Error al intentar entrenar la arquitectura"})

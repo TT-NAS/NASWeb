@@ -24,7 +24,6 @@ setupRange("range-mutation", "range-mutation-value");
 setupRange("range-generations", "range-generations-value");
 
 // Definitions
-const API_URL = "http://127.0.0.1:3000"
 const start_button = document.getElementById("button-start")
 const resultIou = document.getElementById("result-iou")
 const resultSearchTime = document.getElementById("result-search-time")
@@ -122,7 +121,7 @@ const startSearch = async () => {
   Notiflix.Loading.pulse("Buscando la mejor arquitectura...");
   try {
     // Envía los valores al back
-    const response = await fetch(`${API_URL}/api/search`, {
+    const response = await fetch(`/api/search`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)
@@ -135,7 +134,7 @@ const startSearch = async () => {
     renderResults(data)
     console.log(data);
     // Guarda el cromosoma en la sesión
-    sessionStorage.setItem("best_cromosoma", JSON.stringify(data.results, null, 2))
+    sessionStorage.setItem("best_chromosome", JSON.stringify(data.results, null, 2))
     // activa la descarga y el entrenamiento
     downloadButton.disabled = false
     trainingButton.disabled = false
@@ -156,7 +155,7 @@ const startSearch = async () => {
  * Crea un dcoumento json con los datos del cromosoma encontrado y lo descarga
  */
 function downloadJson() {
-  const json_data = sessionStorage.getItem("best_cromosoma")
+  const json_data = sessionStorage.getItem("best_chromosome")
   const blob = new Blob([json_data], { type: "application/json" })
   // crea una url temporal
   const url = URL.createObjectURL(blob)
@@ -171,9 +170,48 @@ function downloadJson() {
   URL.revokeObjectURL(url)
 }
 
+async function startTraining() {
+  // toma los valores de los input
+  const data_loader = document.getElementById("select-dataset").value
+  const dataset_len = document.getElementById("number-dataset-size").value
+  const epochs = document.getElementById("number-epochs").value
+  const chromosome = JSON.parse(sessionStorage.getItem("best_chromosome")).real_codification
+  // Muestra el cargando
+  Notiflix.Loading.dots("Entrenando la arquitectura arquitectura...");
+  try {
+    // Envía la petición al servidor
+    const res = await fetch("/api/train", {
+      method: "post",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        data_loader,
+        dataset_len,
+        epochs,
+        chromosome
+      })
+    })
+    if (!res.ok) {
+      throw new Error(`Solicitud fallida con código ${res.status}`)
+    }
+    const results = await res.json()
+    // muestra los resultados
+    console.log(results)
+  } catch (e) {
+    console.error(e)
+    Notiflix.Report.failure(
+      "Error",
+      "Ocurrió un error al procesar la petición",
+      "De acuerdo"
+    )
+  } finally {
+    Notiflix.Loading.remove();
+  }
+}
+
 // Reactions
 start_button.addEventListener("click", () => startSearch())
 downloadJsonButton.addEventListener("click", () => downloadJson())
+trainingButton.addEventListener("click", () => startTraining())
 
 // Eleva la tarjeta de resultados cuando su dropdown está abierto para evitar que quede oculta.
 document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach((toggle) => {

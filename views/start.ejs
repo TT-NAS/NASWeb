@@ -82,18 +82,18 @@
           <div>
             <div class="mb-1">
               <label for="form-label">Seleccionar conjunto de datos: </label>
-              <select name="dataset" id="dataset-select" class="form-select">
-                <option value="road">Caminos</option>
+              <select name="dataset" id="select-dataset" class="form-select">
+                <option value="road" default>Caminos</option>
                 <option value="car">Carros</option>
               </select>
             </div>
             <div class="mb-1">
               <label for="" class="form-label">Tamaño del dataset:</label>
-              <input type="number" value="100" class="form-control" min="10" max="1000" step="100">
+              <input type="number" value="100" class="form-control" min="10" max="1000" step="100" id="number-dataset-size">
             </div>
             <div class="mb-1">
               <label for="" class="form-label">Epocas:</label>
-              <input type="number" class="form-control" min="1" max="35" value="10">
+              <input type="number" class="form-control" min="1" max="35" value="2" id="number-epochs">
             </div>
             <div class="d-grid gap-2 mt-3">
               <button class="btn btn-primary" id="button-training" disabled>Entrenar arquitectura</button>
