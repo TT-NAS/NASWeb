@@ -192,3 +192,12 @@ input[type="number"].form-control {
 .nav-link:not(.active):hover {
   color: var(--primary-light-color) !important;
 }
+
+
+/* Pantallas medianas (tablets) */
+@media (min-width: 577px) and (max-width: 1400px) {
+  .inicial-image{
+    height: auto;
+    width: 27rem;
+  }
+}
