@@ -40,6 +40,9 @@ const resultsTrainButton = document.getElementById("button-results_train")
 const containerTrainParameters = document.getElementById("container-train-parameters")
 const containerTrainResults = document.getElementById("container-train-results")
 
+const fileChromosoma = document.getElementById("file-chromosoma")
+const buttonLoadArchitecture = document.getElementById("button-load_architecture")
+
 //Functions 
 
 /**
@@ -249,12 +252,57 @@ function changeTrainingDisplay(toActive) {
   resultsTrainButton.classList.toggle("active")
 }
 
+/**
+ * Se ejecuta cuándo se seleccióna un archivo, carga el cromosoma en la sesión
+ * @returns null 
+ */
+function loadFile() {
+  if (fileChromosoma.files.length === 0) return;
+
+  const file = fileChromosoma.files[0]
+  const lector = new FileReader();
+
+  lector.onload = (evento) => {
+    try {
+      const contenido = evento.target.result;
+      const data = JSON.parse(contenido);
+
+      // Acceder al cromosoma
+      if ("real_codification" in data) {
+        // Guarda en la sesión
+        sessionStorage.setItem("best_chromosome", JSON.stringify(data, null, 2))
+        // activa la descarga y el entrenamiento
+        downloadButton.disabled = false
+        trainingButton.disabled = false
+      } else {
+        console.error("No hay codificación")
+        Notiflix.Report.failure(
+          "Error",
+          "El documento no tiene la codificación",
+          "De acuerdo"
+        )
+      }
+    } catch (e) {
+      console.error(e)
+      Notiflix.Report.failure(
+        "Error",
+        "Error al leer el JSON",
+        "De acuerdo"
+      )
+    }
+  }
+
+  lector.readAsText(file)
+}
+
 // Reactions
 start_button.addEventListener("click", () => startSearch())
 downloadJsonButton.addEventListener("click", () => downloadJson())
 trainingButton.addEventListener("click", () => startTraining())
 parametersButton.addEventListener("click", () => changeTrainingDisplay("parameters"))
 resultsTrainButton.addEventListener("click", () => changeTrainingDisplay("results"))
+buttonLoadArchitecture.addEventListener("click", () => fileChromosoma.click())
+fileChromosoma.addEventListener("change", () => loadFile())
 
 // Eleva la tarjeta de resultados cuando su dropdown está abierto para evitar que quede oculta.
 document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach((toggle) => {
