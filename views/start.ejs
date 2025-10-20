@@ -8,12 +8,13 @@
         <!-- Animation card -->
         <div class="card glass-card p-4">
           <nav class="nav nav-pills flex-column flex-sm-row mb-1">
-            <a class="flex-sm-fill text-sm-center nav-link active" aria-current="page" href="#">Arquitectura</a>
-            <a class="flex-sm-fill text-sm-center nav-link" href="#">Convergencia</a>
-            <a class="flex-sm-fill text-sm-center nav-link" href="#">Frente de pareto</a>
+            <a class="flex-sm-fill text-sm-center nav-link active" aria-current="page" href="#" id="navbutton-architecture">Arquitectura</a>
+            <a class="flex-sm-fill text-sm-center nav-link" href="#" id="navbutton-chart">Convergencia</a>
+            <a class="flex-sm-fill text-sm-center nav-link disabled" href="#" disabled>Frente de pareto</a>
           </nav>
           <div class="card p-1 bg-light" >
-            <div id="animation" style="width: auto; height: 300px"></div>
+            <div id="animation" class="animation"></div>
+            <canvas id="canvas-chart"></canvas>
           </div>
         </div>
 

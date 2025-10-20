@@ -193,6 +193,10 @@ input[type="number"].form-control {
   color: var(--primary-light-color) !important;
 }
 
+.animation{
+  width: auto; 
+  height: 300px;
+}
 
 /* Pantallas medianas (tablets) */
 @media (min-width: 577px) and (max-width: 1400px) {

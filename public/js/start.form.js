@@ -25,23 +25,29 @@ setupRange("range-mutation", "range-mutation-value");
 setupRange("range-generations", "range-generations-value");
 
 // Definitions
+// Search
 const start_button = document.getElementById("button-start")
 const resultIou = document.getElementById("result-iou")
 const resultSearchTime = document.getElementById("result-search-time")
 const resultGeneration = document.getElementById("result-generation")
 const resultStopReason = document.getElementById("result-stop-reason")
-
+// download
 const downloadButton = document.getElementById("button-download")
 const downloadJsonButton = document.getElementById("a-download-json")
-
+// training
 const trainingButton = document.getElementById("button-training")
 const parametersButton = document.getElementById("button-parameters_train")
 const resultsTrainButton = document.getElementById("button-results_train")
 const containerTrainParameters = document.getElementById("container-train-parameters")
 const containerTrainResults = document.getElementById("container-train-results")
-
+// load file
 const fileChromosoma = document.getElementById("file-chromosoma")
 const buttonLoadArchitecture = document.getElementById("button-load_architecture")
+// chart
+const canvasChart = document.getElementById("canvas-chart")
+const animation = document.getElementById("animation")
+const navButtonArchitecture = document.getElementById("navbutton-architecture")
+const navButtonChart = document.getElementById("navbutton-chart")
 
 //Functions 
 
@@ -105,6 +111,31 @@ const renderResults = (payload = {}) => {
   }
 }
 
+let chartInstance;
+/**
+ * crea una grafica de linea y muestra la convergencia del algoritmo
+ * @param {vector} vector 
+ */
+function loadChart(vector = [9,8,7,6,5,4,3,2,1]) {
+  if (chartInstance) chartInstance.destroy();
+
+  chartInstance = new Chart(canvasChart, {
+    type: 'line',
+    data: {
+      labels: vector.map((_, i) => i + 1), // genera 1, 2, 3...
+      datasets: [{
+        label: 'Epochs',
+        data: vector,
+        fill: false,
+        borderColor: 'rgb(119, 62, 199)',
+        tension: 0.1
+      }]
+    }
+  });
+
+  window.dispatchEvent(new Event('resize'));
+}
+
 /**
  * Recoge los parámetros del formulario, inicia la búsqueda en el backend y actualiza los resultados mostrados.
  * Gestiona estados de carga y errores para ofrecer retroalimentación al usuario.
@@ -142,6 +173,9 @@ const startSearch = async () => {
     // Muestra los resultados
     renderResults(data)
     console.log(data);
+    // Muestra la gráfica
+    navButtonChart.click()
+    loadChart(data.results.vector)
     // Guarda el cromosoma en la sesión
     sessionStorage.setItem("best_chromosome", JSON.stringify(data.results, null, 2))
     // activa la descarga y el entrenamiento
@@ -250,6 +284,24 @@ function changeTrainingDisplay(toActive) {
   }
   parametersButton.classList.toggle("active")
   resultsTrainButton.classList.toggle("active")
+  window.dispatchEvent(new Event('resize'));
+}
+
+/**
+ * Cambia entre las vistas de animación y grafica de convergencia
+ * @param {string} toActive Dice el contenedor que debe mostrar
+ */
+function changeViewsNav(toActive) {
+  if (toActive === "animation") {
+    animation.style.display = "block"
+    canvasChart.style.display = "none"
+  } else if (toActive === "chart") {
+    animation.style.display = "none"
+    canvasChart.style.display = "block"
+  }
+  navButtonArchitecture.classList.toggle("active")
+  navButtonChart.classList.toggle("active")
+  window.dispatchEvent(new Event('resize'));
 }
 
 /**
@@ -303,6 +355,8 @@ parametersButton.addEventListener("click", () => changeTrainingDisplay("paramete
 resultsTrainButton.addEventListener("click", () => changeTrainingDisplay("results"))
 buttonLoadArchitecture.addEventListener("click", () => fileChromosoma.click())
 fileChromosoma.addEventListener("change", () => loadFile())
+navButtonArchitecture.addEventListener("click", () => changeViewsNav("animation"))
+navButtonChart.addEventListener("click", () => changeViewsNav("chart"))
 
 // Eleva la tarjeta de resultados cuando su dropdown está abierto para evitar que quede oculta.
 document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach((toggle) => {
@@ -320,6 +374,9 @@ document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach((toggle) => {
 // Defaults
 document.addEventListener("DOMContentLoaded", () => {
   (() => {
-    containerTrainResults.style.display = "none"
+    containerTrainResults.style.display = "none";
+    canvasChart.style.display = "none";
+
+    window.dispatchEvent(new Event('resize'));
   })();
-})
+});
