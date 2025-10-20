@@ -124,7 +124,7 @@ function loadChart(vector = [9,8,7,6,5,4,3,2,1]) {
     data: {
       labels: vector.map((_, i) => i + 1), // genera 1, 2, 3...
       datasets: [{
-        label: 'Epochs',
+        label: 'Generación',
         data: vector,
         fill: false,
         borderColor: 'rgb(119, 62, 199)',
