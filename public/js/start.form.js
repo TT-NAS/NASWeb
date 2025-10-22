@@ -377,6 +377,9 @@ document.addEventListener("DOMContentLoaded", () => {
     containerTrainResults.style.display = "none";
     canvasChart.style.display = "none";
 
+    loadChart();
+
+    // Resize
     window.dispatchEvent(new Event('resize'));
   })();
 });
