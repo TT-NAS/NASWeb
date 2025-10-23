@@ -11,6 +11,8 @@ app.set('views', path.join(__dirname, 'views'))
 
 app.use(express.static(path.join(__dirname, 'public')))
 app.use("/js", express.static(path.join(__dirname, "node_modules/notiflix/dist")))
+app.use("/js", express.static(path.join(__dirname, "node_modules/animejs/dist")))
+app.use("/js", express.static(path.join(__dirname, "node_modules/leader-line")))
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))

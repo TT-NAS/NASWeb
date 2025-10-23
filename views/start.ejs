@@ -2,6 +2,8 @@
 
   <%- include('./partials/_nav') %>
   
+  <link rel="stylesheet" href="/css/animation.css">
+
   <div class="container py-5">
     <div class="row">
       <div class="col-md-8">
@@ -13,7 +15,8 @@
             <a class="flex-sm-fill text-sm-center nav-link disabled" href="#" disabled>Frente de pareto</a>
           </nav>
           <div class="card p-1 bg-light" >
-            <div id="animation" class="animation"></div>
+            <!-- <div id="animation" class="animation"></div> -->
+            <%- include("./partials/_unet_animation") %>
             <canvas id="canvas-chart"></canvas>
           </div>
         </div>
@@ -152,4 +155,5 @@
 </script>
 
 <%- include('./partials/_footer') %>
+<script src="/js/start.animation.js"></script>
 <script src="/js/start.form.js"></script>
