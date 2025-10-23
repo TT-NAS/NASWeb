@@ -1,8 +1,35 @@
-const { animate, utils, createDraggable, spring } = anime;
+const { animate: animeAnimate, utils, createDraggable, spring } = anime;
 
-var animationMs = 800;
-var restMs = 1200;
-var intervalMs = animationMs + restMs;
+let scheduleLinePosition = () => {};
+
+// Wrap anime.js animate calls to keep leader lines in sync while elements move.
+function animate(targets, options = {}) {
+    const opts = { ...options };
+    const userBegin = opts.begin;
+    const userUpdate = opts.update;
+    const userComplete = opts.complete;
+
+    opts.begin = (anim) => {
+        scheduleLinePosition();
+        if (typeof userBegin === "function") userBegin(anim);
+    };
+
+    opts.update = (anim) => {
+        scheduleLinePosition();
+        if (typeof userUpdate === "function") userUpdate(anim);
+    };
+
+    opts.complete = (anim) => {
+        scheduleLinePosition();
+        if (typeof userComplete === "function") userComplete(anim);
+    };
+
+    return animeAnimate(targets, opts);
+}
+
+const animationMs = 800;
+const restMs = 1200;
+const intervalMs = animationMs + restMs;
 
 const filtersColorMap = {
     linear: "#76E174",
@@ -163,6 +190,25 @@ const prevState = {
         },
     },
 };
+
+// Cache DOM lookups for convolution blocks to avoid repetitive queries.
+const convElementCache = new Map();
+
+function getConvBox(layerNumber, convBlockNumber, convNumber) {
+    const key = `${layerNumber}-${convBlockNumber}-${convNumber}`;
+    if (!convElementCache.has(key)) {
+        const element = document.querySelector(
+            `[data-layer="${layerNumber}"] [data-conv-block="${convBlockNumber}"] [data-conv="${convNumber}"]`
+        );
+        convElementCache.set(key, element);
+    }
+    return convElementCache.get(key) || null;
+}
+
+function getConvElement(layerNumber, convBlockNumber, convNumber) {
+    const convBox = getConvBox(layerNumber, convBlockNumber, convNumber);
+    return convBox ? convBox.querySelector(".convolution") : null;
+}
 
 const conv0_ur = document.getElementById("img1");
 const conv0_dr = document.getElementById("img2");
@@ -342,72 +388,48 @@ arrows["layer5"].arrow_conv = new LeaderLine(conv5_dl, conv5_dr, {
     path: "straight",
 });
 
-// actualizar continuamente las flechas para que sigan a los elementos
-(() => {
-    // const lines = [arrow1_1, arrow1_2, arrow1_c, arrow1_3, arrow1_4].filter(Boolean);
-    // const lines = flechas.flat().filter(Boolean);
-    const lines = [];
-    for (const layerArrows of Object.values(arrows)) {
-        for (const line of Object.values(layerArrows)) {
-            if (line) lines.push(line);
-        }
-    }
-    let rafId = null;
+// mantener las flechas sincronizadas con las transformaciones de los nodos
+const allLines = Object.values(arrows)
+    .flatMap((layerArrows) => Object.values(layerArrows))
+    .filter(Boolean);
 
-    function updateLines() {
-        for (const line of lines) {
-            try {
-                line.position();
-            } catch (e) {
-                /* ignore if removed */
-            }
-        }
-        // además de reposicionar, re-aplicar comportamiento completo de flechas
-        try {
-            const now = performance.now();
-            if (
-                latestConfig &&
-                !_isApplyingArrows &&
-                now - _lastArrowsApply >= _arrowsApplyInterval
-            ) {
-                _isApplyingArrows = true;
-                _lastArrowsApply = now;
-                // applyArrowsConfig espera el objeto unet (antes se pasaba config.unet)
+scheduleLinePosition = (() => {
+    let rafId = null;
+    return () => {
+        if (rafId !== null) return;
+        rafId = requestAnimationFrame(() => {
+            rafId = null;
+            for (const line of allLines) {
+                if (!line || typeof line.position !== "function") continue;
                 try {
-                    applyArrowsConfig(latestConfig.unet);
+                    line.position();
                 } catch (err) {
-                    console.error("Error aplicando applyArrowsConfig:", err);
-                } finally {
-                    // permitir nueva aplicación en el siguiente intervalo
-                    _isApplyingArrows = false;
+                    /* ignore removed lines */
                 }
             }
-        } catch (e) {
-            console.error("Error en updateLines al re-aplicar flechas:", e);
-        }
-        rafId = requestAnimationFrame(updateLines);
-    }
-
-    // comenzar loop (se puede cancelar con cancelAnimationFrame(rafId) si se necesita)
-    rafId = requestAnimationFrame(updateLines);
-
-    // también recalcular inmediatamente en eventos relevantes
-    const refresh = () => updateLines();
-    window.addEventListener("resize", refresh);
-    window.addEventListener("scroll", refresh, true);
-    new MutationObserver(refresh).observe(document.body, {
-        attributes: true,
-        childList: true,
-        subtree: true,
-    });
+        });
+    };
 })();
+
+const scheduleArrowsOnEvent = () => {
+    scheduleLinePosition();
+};
+
+window.addEventListener("resize", scheduleArrowsOnEvent);
+window.addEventListener("scroll", scheduleArrowsOnEvent, true);
+
+const observerTarget = document.getElementById("animation") || document.body;
+const layoutObserver = new MutationObserver(scheduleArrowsOnEvent);
+layoutObserver.observe(observerTarget, {
+    attributes: true,
+    childList: true,
+    subtree: true,
+});
+
+scheduleLinePosition();
 
 // última configuración cargada (se actualiza en loadAndApplyConfig)
 let latestConfig = null;
-// control de frecuencia para re-aplicar comportamiento de flechas
-let _lastArrowsApply = 0;
-let _isApplyingArrows = false;
-const _arrowsApplyInterval = 500;
 
 function easeInOutCubicSize(t) {
     return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -664,6 +686,8 @@ function applyArrowsConfig(config) {
             console.error("No se pudo ocultar arrow_conv:", e);
         }
     }
+
+    scheduleLinePosition();
 }
 
 function applyConvConfig(details, layerNumber, convBlockNumber, bottleneck) {
@@ -672,20 +696,19 @@ function applyConvConfig(details, layerNumber, convBlockNumber, bottleneck) {
         y: "100%",
     };
 
-    signs = {
+    const signs = {
         0: "-",
         1: "+",
     };
     let sign = details.convIndex ^ (convBlockNumber - 1);
     if (bottleneck) sign = sign ^ 1;
 
-    const convElement = document.querySelector(
-        `[data-layer="${layerNumber}"] [data-conv-block="${convBlockNumber}"] [data-conv="${
-            details.convIndex + 1
-        }"] .convolution`
-    );
+    const convBox = getConvBox(layerNumber, convBlockNumber, details.convIndex + 1);
+    const convElement = convBox ? convBox.querySelector(".convolution") : null;
 
-    argsConvBox = {};
+    if (!convBox || !convElement) {
+        return;
+    }
 
     if (details.fromPos === pos.Normal && details.toPos === pos.Hidden) {
         animate(convElement.parentElement, {
@@ -824,8 +847,8 @@ function applyConvBlockConfig(
         if (convConfig) {
             const filters = convConfig.filters;
             const activation = convConfig.activation;
-            backgroundColor = filtersColorMap[activation] || "#FFFFFF";
-            widthPercent = filters
+            const backgroundColor = filtersColorMap[activation] || "#FFFFFF";
+            let widthPercent = filters
                 ? Math.min(9 * (Math.log2(filters) + 1), 100)
                 : 0;
 
@@ -842,16 +865,20 @@ function applyConvBlockConfig(
         }
     });
 
-    const conv1 = document.querySelector(
-        `[data-layer="${layerNumber}"] [data-conv-block="${convBlockNumber}"] [data-conv="${
-            detailsAnimation.conv0.convIndex + 1
-        }"]`
+    const conv1 = getConvBox(
+        layerNumber,
+        convBlockNumber,
+        detailsAnimation.conv0.convIndex + 1
     );
-    const conv2 = document.querySelector(
-        `[data-layer="${layerNumber}"] [data-conv-block="${convBlockNumber}"] [data-conv="${
-            detailsAnimation.conv1.convIndex + 1
-        }"]`
+    const conv2 = getConvBox(
+        layerNumber,
+        convBlockNumber,
+        detailsAnimation.conv1.convIndex + 1
     );
+
+    if (!conv1 || !conv2) {
+        return;
+    }
 
     if (detailsAnimation.conv0.toPos !== pos.Hidden) {
         prevState[`layer${layerNumber}`][`convBlock${convBlockNumber}`].in =
@@ -966,6 +993,10 @@ async function loadAndApplyConfig(file) {
         const config = await response.json();
         latestConfig = config;
         applyUNetConfig(config);
+        if (config && config.unet) {
+            applyArrowsConfig(config.unet);
+        }
+        scheduleLinePosition();
     } catch (error) {
         console.error(`Error al cargar ${file}:`, error);
     }
@@ -975,7 +1006,7 @@ async function loadAndApplyConfig(file) {
   loadAndApplyConfig("files/redes/" + "red0.json")
 })(); */
 
-/* function mainLoop() {
+function mainLoop() {
     let i = 0;
   setInterval(() => {
         console.log("Loop")
@@ -996,4 +1027,4 @@ async function loadAndApplyConfig(file) {
     //         await new Promise((res) => setTimeout(res, intervalMs));
     //     }
     // })();
-} */
+}
