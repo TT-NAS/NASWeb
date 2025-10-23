@@ -971,7 +971,11 @@ async function loadAndApplyConfig(file) {
     }
 }
 
-function mainLoop() {
+/* (() => {
+  loadAndApplyConfig("files/redes/" + "red0.json")
+})(); */
+
+/* function mainLoop() {
     let i = 0;
   setInterval(() => {
         console.log("Loop")
@@ -992,6 +996,4 @@ function mainLoop() {
     //         await new Promise((res) => setTimeout(res, intervalMs));
     //     }
     // })();
-}
-
-mainLoop();
+} */

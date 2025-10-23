@@ -293,7 +293,7 @@ function changeTrainingDisplay(toActive) {
  */
 function changeViewsNav(toActive) {
   if (toActive === "animation") {
-    animation.style.display = "block"
+    animation.style.display = "flex"
     canvasChart.style.display = "none"
   } else if (toActive === "chart") {
     animation.style.display = "none"
