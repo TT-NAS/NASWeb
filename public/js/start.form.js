@@ -128,7 +128,7 @@ function loadChart(vector = [9,8,7,6,5,4,3,2,1]) {
         data: vector,
         fill: false,
         borderColor: 'rgb(119, 62, 199)',
-        tension: 0.1
+        tension: 0.2
       }]
     }
   });
@@ -374,10 +374,10 @@ document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach((toggle) => {
 // Defaults
 document.addEventListener("DOMContentLoaded", () => {
   (() => {
+    loadChart();
+
     containerTrainResults.style.display = "none";
     canvasChart.style.display = "none";
-
-    loadChart();
 
     // Resize
     window.dispatchEvent(new Event('resize'));
