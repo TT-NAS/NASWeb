@@ -76,6 +76,10 @@
     border-radius: 1.3vh;
 }
 
+.leader-line {
+    z-index: 2000 !important;
+}
+
 [data-layer="1"] {
     height: 100%;
     gap: 30vh;
