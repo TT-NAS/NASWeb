@@ -1,0 +1,67 @@
+{
+    "binary": "AAAAAAAAAAAAAAAAAEBBBUADIXRJ4LQAMAKMPEI_192",
+    "unet": {
+        "layer0": null,
+        "layer1": null,
+        "layer2": {
+            "convPath": {
+                "conv0": {
+                    "filters": 64,
+                    "kernelSize": 1,
+                    "activation": "elu"
+                },
+                "conv1": {
+                    "filters": 1,
+                    "kernelSize": 1,
+                    "activation": "softplus"
+                },
+                "pooling": "max"
+            },
+            "deconvPath": {
+                "conv0": null,
+                "conv1": {
+                    "filters": 256,
+                    "kernelSize": 1,
+                    "activation": "tanh"
+                },
+                "concat": true
+            }
+        },
+        "layer3": {
+            "convPath": {
+                "conv0": {
+                    "filters": 128,
+                    "kernelSize": 3,
+                    "activation": "softsign"
+                },
+                "conv1": {
+                    "filters": 512,
+                    "kernelSize": 1,
+                    "activation": "tanh"
+                },
+                "pooling": "average"
+            },
+            "deconvPath": {
+                "conv0": null,
+                "conv1": {
+                    "filters": 128,
+                    "kernelSize": 1,
+                    "activation": "linear"
+                },
+                "concat": true
+            }
+        },
+        "bottleneck": {
+            "conv0": {
+                "filters": 64,
+                "kernelSize": 5,
+                "activation": "relu"
+            },
+            "conv1": {
+                "filters": 1024,
+                "kernelSize": 3,
+                "activation": "relu"
+            }
+        }
+    }
+}

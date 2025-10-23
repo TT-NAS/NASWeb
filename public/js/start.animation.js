@@ -976,7 +976,7 @@ function mainLoop() {
   setInterval(() => {
         console.log("Loop")
         const file = jsonFiles[i % jsonFiles.length];
-        loadAndApplyConfig("redes/" + file);
+        loadAndApplyConfig("files/redes/" + file);
         i++;
     }, intervalMs);
     // (async () => {

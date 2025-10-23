@@ -1,0 +1,59 @@
+{
+    "binary": "AAAAAAAAAAAAAAAAAAAF2MADYQABTZUZWZQABMA_192",
+    "unet": {
+        "layer0": null,
+        "layer1": null,
+        "layer2": {
+            "convPath": {
+                "conv0": null,
+                "conv1": {
+                    "filters": 32,
+                    "kernelSize": 5,
+                    "activation": "softsign"
+                },
+                "pooling": "average"
+            },
+            "deconvPath": {
+                "conv0": null,
+                "conv1": {
+                    "filters": 512,
+                    "kernelSize": 1,
+                    "activation": "softsign"
+                },
+                "concat": false
+            }
+        },
+        "layer3": {
+            "convPath": {
+                "conv0": null,
+                "conv1": {
+                    "filters": 128,
+                    "kernelSize": 5,
+                    "activation": "softmax"
+                },
+                "pooling": "average"
+            },
+            "deconvPath": {
+                "conv0": {
+                    "filters": 64,
+                    "kernelSize": 5,
+                    "activation": "softplus"
+                },
+                "conv1": {
+                    "filters": 8,
+                    "kernelSize": 5,
+                    "activation": "softplus"
+                },
+                "concat": false
+            }
+        },
+        "bottleneck": {
+            "conv0": null,
+            "conv1": {
+                "filters": 4,
+                "kernelSize": 5,
+                "activation": "linear"
+            }
+        }
+    }
+}
