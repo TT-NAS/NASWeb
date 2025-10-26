@@ -198,6 +198,15 @@ input[type="number"].form-control {
   height: 300px;
 }
 
+.popover-header {
+  background-color: var(--contrast-color);
+  color: var(--primary-color);
+}
+
+.popover-body {
+  color: var(--secondary-color);
+}
+
 /* Pantallas medianas (tablets) */
 @media (min-width: 577px) and (max-width: 1400px) {
   .inicial-image{

@@ -26,27 +26,27 @@
           <div class="col-md">
             <div>
               <div class="">
-                <label for="range-population-size" class="form-label">Tamaño de la población: <output for="range-population-size" id="range-population-size-value" aria-hidden="true"></output></label>
+                <label for="range-population-size" class="form-label"><i class="bi bi-info-circle" role="button" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Tamaño de la población" data-bs-content="Cantidad de individuos que se evalúan en cada generación del algoritmo."></i> Tamaño de la población: <output for="range-population-size" id="range-population-size-value" aria-hidden="true"></output></label>
                 <input type="range" class="form-range" min="0" max="100" value="50" id="range-population-size">
               </div>
 
               <div class="">
-                <label for="range-f" class="form-label">F: <output for="range-f" id="range-f-value" aria-hidden="true"></output></label>
+                  <label for="range-f" class="form-label"><i class="bi bi-info-circle" role="button" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Factor de mutación (F)" data-bs-content="Escala la diferencia entre candidatos para generar nuevas soluciones; valores altos exploran más el espacio."></i> F: <output for="range-f" id="range-f-value" aria-hidden="true"></output></label>
                 <input type="range" class="form-range" min="0" max="2" step="0.01" value="0.5" id="range-f">
               </div>
 
               <div class="">
-                <label for="range-crossover" class="form-label">Tasa de cruza: <output for="range-crossover" id="range-crossover-value" aria-hidden="true"></output></label>
+                  <label for="range-crossover" class="form-label"><i class="bi bi-info-circle" role="button" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Tasa de cruza" data-bs-content="Probabilidad de combinar atributos del vector mutado con el actual; equilibra exploración y explotación."></i> Tasa de cruza: <output for="range-crossover" id="range-crossover-value" aria-hidden="true"></output></label>
                 <input type="range" class="form-range" min="0" max="1" step="0.01" value="0.5" id="range-crossover">
               </div>
 
               <div class="">
-                <label for="range-mutation" class="form-label">Tasa de mutación: <output for="range-mutation" id="range-mutation-value" aria-hidden="true"></output></label>
+                  <label for="range-mutation" class="form-label"><i class="bi bi-info-circle" role="button" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Tasa de mutación" data-bs-content="Probabilidad de alterar genes individuales en los vectores; ayuda a evitar mínimos locales."></i> Tasa de mutación: <output for="range-mutation" id="range-mutation-value" aria-hidden="true"></output></label>
                 <input type="range" class="form-range" min="0" max="1" step="0.01" value="0.01" id="range-mutation">
               </div>
 
               <div class="">
-                <label for="range-generations" class="form-label">Generaciones: <output for="range-generations" id="range-generations-value" aria-hidden="true"></output></label>
+                  <label for="range-generations" class="form-label"><i class="bi bi-info-circle" role="button" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Generaciones" data-bs-content="Número máximo de iteraciones que ejecutará el algoritmo diferencial en la búsqueda."></i> Generaciones: <output for="range-generations" id="range-generations-value" aria-hidden="true"></output></label>
                 <input type="range" class="form-range" min="1" max="1000" value="100" id="range-generations">
               </div>
 
@@ -63,8 +63,8 @@
         <div class="card glass-card p-4">
           <span class="fs-4">Resultados de la búsqueda</span>
           <hr>
-          <p>IOU: <span id="result-iou">--</span></p>
-          <p>Tiempo de búsqueda: <span id="result-search-time">--</span></p>
+          <p><i class="bi bi-info-circle" role="button" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Índice IoU" data-bs-content="Intersección sobre Unión: mide la coincidencia entre la predicción segmentada y la máscara real."></i> IOU: <span id="result-iou">--</span></p>
+          <p>Tiempo de búsqueda: <span id="result-search-time">--</span> s</p>
           <p>Generación alcanzada: <span id="result-generation">--</span></p>
           <p>Razón de detenimiento: <span id="result-stop-reason">--</span></p>
           <div class="btn-group" role="group">
@@ -110,8 +110,8 @@
             </div>
           </div>
           <div class="" id="container-train-results">
-            <p>IOU de entrenamiento: <span id="result-train-iou">--</span></p>
-            <p>IOU de validación: <span id="result-train-iou_val">--</span></p>
+            <p><i class="bi bi-info-circle" role="button" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Índice IoU (train)" data-bs-content="Coincidencia entre la segmentación generada durante el entrenamiento y el objetivo esperado."></i> IOU de entrenamiento: <span id="result-train-iou">--</span></p>
+            <p><i class="bi bi-info-circle" role="button" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Índice IoU (validación)" data-bs-content="Coincidencia entre la segmentación generada en validación y la máscara real del conjunto de validación."></i> IOU de validación: <span id="result-train-iou_val">--</span></p>
             <p>Tiempo de entrenamiento: <span id="result-train-time">--</span></p>
             <p>Epoca alcanzada: <span id="result-train-epoch">--</span></p>
           </div>
@@ -157,6 +157,14 @@
 <%- include('./partials/_footer') %>
 <script src="/js/bundles/anime.umd.min.js"></script>
 <script src="/js/leader-line.min.js"></script>
+<script>
+  const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]')
+  const popoverList = [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl))
+
+  const popover = new bootstrap.Popover('.popover-dismiss', {
+    trigger: 'focus'
+  })
+</script>
 
 <script src="/js/start.animation.js"></script>
 <script src="/js/start.form.js"></script>
