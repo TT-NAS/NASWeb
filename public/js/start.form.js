@@ -198,6 +198,8 @@ const startSearch = async () => {
   }
   // Muestra el cargando
   Notiflix.Loading.pulse("Buscando la mejor arquitectura...");
+  // Mueve scroll hasta arriba
+  window.scrollTo({ top: 0, behavior: "smooth" });
   // Muestra el cambio de arquitecturas
   startLoop()
   try {
@@ -228,6 +230,7 @@ const startSearch = async () => {
     showArchitecture()
   } catch (e) {
     console.error(e)
+    stopLoop()
     Notiflix.Report.failure(
       "Error",
       "Ocurrió un error al procesar la petición",
