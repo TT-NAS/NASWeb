@@ -198,6 +198,8 @@ const startSearch = async () => {
   }
   // Muestra el cargando
   Notiflix.Loading.pulse("Buscando la mejor arquitectura...");
+  // Muestra el cambio de arquitecturas
+  startLoop()
   try {
     // Envía los valores al back
     const response = await fetch(`/api/search`, {
@@ -220,6 +222,8 @@ const startSearch = async () => {
     // activa la descarga y el entrenamiento
     downloadButton.disabled = false
     trainingButton.disabled = false
+    // Detiene la animación de arquitecturas
+    stopLoop()
     // Muestra la arquitectura
     showArchitecture()
   } catch (e) {

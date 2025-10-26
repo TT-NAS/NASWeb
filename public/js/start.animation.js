@@ -27,8 +27,8 @@ function animate(targets, options = {}) {
     return animeAnimate(targets, opts);
 }
 
-const animationMs = 800;
-const restMs = 1200;
+const animationMs = 300;
+const restMs = 200;
 const intervalMs = animationMs + restMs;
 
 const filtersColorMap = {
@@ -1006,25 +1006,28 @@ async function loadAndApplyConfig(file) {
   loadAndApplyConfig("files/redes/" + "red0.json")
 })(); */
 
-function mainLoop() {
-    let i = 0;
-  setInterval(() => {
-        console.log("Loop")
-        const file = jsonFiles[i % jsonFiles.length];
-        loadAndApplyConfig("files/redes/" + file);
-        i++;
-    }, intervalMs);
-    // (async () => {
-    //     while (true) {
-    //         const file = jsonFiles[i % jsonFiles.length];
-    //         try {
-    //             await loadAndApplyConfig("redes/" + file);
-    //         } catch (err) {
-    //             console.error("Error en loadAndApplyConfig:", err);
-    //         }
-    //         i++;
-    //         // esperar el intervalo antes de la siguiente iteración
-    //         await new Promise((res) => setTimeout(res, intervalMs));
-    //     }
-    // })();
+let loopId = null; // Variable global para guardar el ID del intervalo
+
+function startLoop() {
+  let i = 0;
+
+  // Si ya hay un loop corriendo, lo detenemos antes de iniciar otro
+  if (loopId !== null) clearInterval(loopId);
+
+  // Guardamos el ID del intervalo
+  loopId = setInterval(() => {
+    console.log("Loop");
+    const file = jsonFiles[i % jsonFiles.length];
+    loadAndApplyConfig("files/redes/" + file);
+    i++;
+  }, intervalMs);
+}
+
+// 👉 Función para detener el loop
+function stopLoop() {
+  if (loopId !== null) {
+    clearInterval(loopId);
+    loopId = null;
+    console.log("Loop detenido");
+  }
 }
