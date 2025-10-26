@@ -50,4 +50,29 @@ actions.api_train = async (req, res) => {
   }
 }
 
+/**
+ * Transforma el cromosoma a formato JSON
+ * @param {Object} req Chromosome
+ * @param {*} res 
+ * @returns Cromosoma en formato JSON
+ */
+actions.api_json = async (req, res) => {
+  try {
+    const body = req.body;
+    const response = await fetch(`${API_URL}/json`, {
+      method: "post",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    })
+    if (!response.ok) {
+      throw new Error(`Solicitud fallida con código ${response.status}`)
+    }
+    const results = await response.json()
+    return res.json(results)
+  } catch (err) {
+    console.error(err)
+    return res.status(500).json({error: "Error al intentar convertir el cromosoma a JSON"})
+  }
+}
+
 module.exports = actions;

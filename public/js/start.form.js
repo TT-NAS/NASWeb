@@ -137,6 +137,45 @@ function loadChart(vector = [9,8,7,6,5,4,3,2,1]) {
 }
 
 /**
+ * Transforma un cromosoma en formato de lista a formato json y lo muestra en la vista
+ * Usa los datos de la sesión, almacenados después de la búsqueda
+ */
+async function showArchitecture() {
+  const chromosome = JSON.parse(sessionStorage.getItem("best_chromosome")).real_codification
+  try {
+    // Hace una petición al end point
+    const res = await fetch("/api/json", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({chromosome})
+    })
+
+    if (!res.ok) {
+      throw new Error(`Solicitud fallida con código ${res.status}`)
+    }
+
+    const json_chromosome = await res.json()
+    // Muestra el cromosoma
+    console.log(json_chromosome)
+    if (json_chromosome?.unet) {
+      applyUNetConfig(json_chromosome)
+      applyArrowsConfig(json_chromosome.unet)
+      scheduleLinePosition()
+    } else {
+      throw new Error("Error con el formato de la arquitectura, no hay .unet")
+    }
+  
+  } catch (e) {
+    console.error(e)
+    Notiflix.Report.failure(
+        "Error",
+        "Ocurrió un error al reconocer el cromosoma",
+        "De acuerdo"
+      )
+  }
+}
+
+/**
  * Recoge los parámetros del formulario, inicia la búsqueda en el backend y actualiza los resultados mostrados.
  * Gestiona estados de carga y errores para ofrecer retroalimentación al usuario.
  */
@@ -181,6 +220,8 @@ const startSearch = async () => {
     // activa la descarga y el entrenamiento
     downloadButton.disabled = false
     trainingButton.disabled = false
+    // Muestra la arquitectura
+    showArchitecture()
   } catch (e) {
     console.error(e)
     Notiflix.Report.failure(
