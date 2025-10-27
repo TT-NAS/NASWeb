@@ -1,34 +1,13 @@
-/* .unet {
-    margin: 0;
-    height: 10vh;
-    width: 10vw;
-} */
-
 .box {
     box-sizing: border-box;
     overflow: hidden;
 }
 
-.img-io {
-    height: 15rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 45%;
-    margin-right: 2%;
-}
-
-.img-io img {
-    height: 25%;
-    width: auto;
-    border-radius: 3vh;
-}
-
 .unet {
     background-color: #1E1E1E;
-    width: 100%;
+    container-type: size;
     height: 100%;
+    width: 100%;
     display: flex;
     flex-direction: row;
     justify-content: center;
@@ -38,10 +17,27 @@
     padding: 3%;
 }
 
+.img-io {
+    /* height: 15rem; */
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 45%;
+    margin-right: 2%;
+}
+
+.img-io img {
+    height: 10cqw;
+    width: auto;
+    border-radius: 4cqh;
+}
+
 .layer {
     background-color: #666666;
-    border-radius: 2.5vh;
-    width: 20%;
+    border-radius: 4cqh;
+    width: 20cqw;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -51,7 +47,7 @@
 .convolution-block {
     /* background-color: #bbb; */
     width: 80%;
-    height: 10vh;
+    height: 15cqh;
     display: flex;
     flex-direction: row;
     justify-content: center;
@@ -65,15 +61,15 @@
     justify-content: center;
     /* width: 20%;
     height: 100%; */
-    width: 2.7vw;
-    height: 10vh;
+    width: 3cqw;
+    height: 15cqh;
 }
 
 .convolution {
     background-color: #81d16e;
     width: 100%;
     height: 100%;
-    border-radius: 1.3vh;
+    border-radius: 1.7cqh;
 }
 
 .leader-line {
@@ -82,53 +78,31 @@
 
 [data-layer="1"] {
     height: 100%;
-    gap: 30vh;
+    gap: 50%;
 }
 [data-layer="2"] {
     height: 90%;
-    gap: 25vh;
+    gap: 45%;
 }
 [data-layer="3"] {
     height: 80%;
-    gap: 20vh;
+    gap: 40%;
 }
 [data-layer="4"] {
     height: 70%;
-    gap: 15vh;
+    gap: 35%;
 }
 
 [data-layer="5"] {
     height: 60%;
-    width: 12%;
+    gap: 12%;
 }
 [data-layer="5"] .convolution-block {
-    height: 30vh;
+    height: 40cqh;
     flex-direction: column;
-    gap: 10vh;
+    gap: 25%;
 }
 [data-layer="5"] .convolution-block .convolution-box {
-    width: 2.7vw;
-    height: 10vh;
+    /* width: 2.7vw; */
+    height: 15cqh;
 }
-
-/* [data-layer="1"] [data-conv-block="2"] [data-conv="2"]{
-    display: none;
-} */
-
-/* [data-layer="1"] [data-conv-block="1"] [data-conv="2"] {
-    width: 40px;
-    height: 50px;
-    background-color: #81D16E;
-}
-
-[data-layer="1"] [data-conv-block="2"] [data-conv="1"] {
-    width: 40px;
-    height: 50px;
-    background-color: #8f8;
-}
-
-[data-layer="1"] [data-conv-block="2"] [data-conv="2"] {
-    width: 40px;
-    height: 50px;
-    background-color: #8f8;
-} */

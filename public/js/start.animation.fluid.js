@@ -1,8 +1,35 @@
-const { animate, utils, createDraggable, spring } = anime;
+const { animate: animeAnimate, utils, createDraggable, spring } = anime;
 
-var animationMs = 300;
-var restMs = 300;
-var intervalMs = animationMs + restMs;
+let scheduleLinePosition = () => {};
+
+// Wrap anime.js animate calls to keep leader lines in sync while elements move.
+function animate(targets, options = {}) {
+    const opts = { ...options };
+    const userBegin = opts.begin;
+    const userUpdate = opts.update;
+    const userComplete = opts.complete;
+
+    opts.begin = (anim) => {
+        scheduleLinePosition();
+        if (typeof userBegin === "function") userBegin(anim);
+    };
+
+    opts.update = (anim) => {
+        scheduleLinePosition();
+        if (typeof userUpdate === "function") userUpdate(anim);
+    };
+
+    opts.complete = (anim) => {
+        scheduleLinePosition();
+        if (typeof userComplete === "function") userComplete(anim);
+    };
+
+    return animeAnimate(targets, opts);
+}
+
+const animationMs = 300;
+const restMs = 300;
+const intervalMs = animationMs + restMs;
 
 const filtersColorMap = {
     linear: "#76E174",
@@ -27,7 +54,7 @@ const poolingColorMap = {
     average: "#538a95",
 };
 
-const posEnum = {
+const pos = {
     Hidden: 0,
     Normal: 1,
     Center: 2,
@@ -78,16 +105,16 @@ const prevState = {
     layer1: {
         active: false,
         convBlock1: {
-            posConv0: posEnum.Normal,
-            posConv1: posEnum.Normal,
+            posConv0: pos.Normal,
+            posConv1: pos.Normal,
             in: null,
             out: null,
             kernelSizeIn: null,
             kernelSizeOut: null,
         },
         convBlock2: {
-            posConv0: posEnum.Normal,
-            posConv1: posEnum.Normal,
+            posConv0: pos.Normal,
+            posConv1: pos.Normal,
             in: null,
             out: null,
             kernelSizeIn: null,
@@ -97,16 +124,16 @@ const prevState = {
     layer2: {
         active: false,
         convBlock1: {
-            posConv0: posEnum.Normal,
-            posConv1: posEnum.Normal,
+            posConv0: pos.Normal,
+            posConv1: pos.Normal,
             in: null,
             out: null,
             kernelSizeIn: null,
             kernelSizeOut: null,
         },
         convBlock2: {
-            posConv0: posEnum.Normal,
-            posConv1: posEnum.Normal,
+            posConv0: pos.Normal,
+            posConv1: pos.Normal,
             in: null,
             out: null,
             kernelSizeIn: null,
@@ -116,16 +143,16 @@ const prevState = {
     layer3: {
         active: false,
         convBlock1: {
-            posConv0: posEnum.Normal,
-            posConv1: posEnum.Normal,
+            posConv0: pos.Normal,
+            posConv1: pos.Normal,
             in: null,
             out: null,
             kernelSizeIn: null,
             kernelSizeOut: null,
         },
         convBlock2: {
-            posConv0: posEnum.Normal,
-            posConv1: posEnum.Normal,
+            posConv0: pos.Normal,
+            posConv1: pos.Normal,
             in: null,
             out: null,
             kernelSizeIn: null,
@@ -135,16 +162,16 @@ const prevState = {
     layer4: {
         active: false,
         convBlock1: {
-            posConv0: posEnum.Normal,
-            posConv1: posEnum.Normal,
+            posConv0: pos.Normal,
+            posConv1: pos.Normal,
             in: null,
             out: null,
             kernelSizeIn: null,
             kernelSizeOut: null,
         },
         convBlock2: {
-            posConv0: posEnum.Normal,
-            posConv1: posEnum.Normal,
+            posConv0: pos.Normal,
+            posConv1: pos.Normal,
             in: null,
             out: null,
             kernelSizeIn: null,
@@ -154,8 +181,8 @@ const prevState = {
     layer5: {
         active: true,
         convBlock1: {
-            posConv0: posEnum.Normal,
-            posConv1: posEnum.Normal,
+            posConv0: pos.Normal,
+            posConv1: pos.Normal,
             in: null,
             out: null,
             kernelSizeIn: null,
@@ -163,6 +190,25 @@ const prevState = {
         },
     },
 };
+
+// Cache DOM lookups for convolution blocks to avoid repetitive queries.
+const convElementCache = new Map();
+
+function getConvBox(layerNumber, convBlockNumber, convNumber) {
+    const key = `${layerNumber}-${convBlockNumber}-${convNumber}`;
+    if (!convElementCache.has(key)) {
+        const element = document.querySelector(
+            `[data-layer="${layerNumber}"] [data-conv-block="${convBlockNumber}"] [data-conv="${convNumber}"]`
+        );
+        convElementCache.set(key, element);
+    }
+    return convElementCache.get(key) || null;
+}
+
+function getConvElement(layerNumber, convBlockNumber, convNumber) {
+    const convBox = getConvBox(layerNumber, convBlockNumber, convNumber);
+    return convBox ? convBox.querySelector(".convolution") : null;
+}
 
 const mutLines = [];
 
@@ -360,57 +406,65 @@ function getElementDistance(el1, el2) {
     return Math.abs(rect2.left - rect1.left);
 }
 
-// actualizar continuamente las flechas para que sigan a los elementos
-(() => {
-    const lines = [];
-    for (const layerArrows of Object.values(arrows)) {
-        for (const line of Object.values(layerArrows)) {
-            if (line) lines.push(line);
-        }
-    }
+// mantener las flechas sincronizadas con las transformaciones de los nodos
+const allLines = Object.values(arrows)
+    .flatMap((layerArrows) => Object.values(layerArrows))
+    .filter(Boolean);
+
+scheduleLinePosition = (() => {
     let rafId = null;
-
-    function updateLines() {
-        for (const line of lines) {
-            try {
-                line.position();
-            } catch (e) {
-                /* ignore if removed */
-            }
-        }
-        for (const line of mutLines) {
-            try {
-                // Obtener distancia entre elementos
-                const distance = getElementDistance(line.start, line.end);
-
-                // Si la distancia es corta, usa "straight", sino "grid"
-                const threshold = 125; // Ajusta este valor según tus necesidades
-                const newPath = distance < threshold ? "straight" : "grid";
-
-                // Solo actualiza si cambió el path
-                if (line.path !== newPath) {
-                    line.setOptions({ path: newPath });
+    return () => {
+        if (rafId !== null) return;
+        rafId = requestAnimationFrame(() => {
+            rafId = null;
+            for (const line of allLines) {
+                if (!line || typeof line.position !== "function") continue;
+                try {
+                    line.position();
+                } catch (err) {
+                    /* ignore removed lines */
                 }
-            } catch (e) {
-                /* ignore if removed */
             }
-        }
-        rafId = requestAnimationFrame(updateLines);
-    }
+            for (const line of mutLines) {
+                try {
+                    // Obtener distancia entre elementos
+                    const distance = getElementDistance(line.start, line.end);
 
-    // comenzar loop (se puede cancelar con cancelAnimationFrame(rafId) si se necesita)
-    rafId = requestAnimationFrame(updateLines);
+                    // Si la distancia es corta, usa "straight", sino "grid"
+                    const threshold = 125; // Ajusta este valor según tus necesidades
+                    const newPath = distance < threshold ? "straight" : "grid";
 
-    // también recalcular inmediatamente en eventos relevantes
-    const refresh = () => updateLines();
-    window.addEventListener("resize", refresh);
-    window.addEventListener("scroll", refresh, true);
-    new MutationObserver(refresh).observe(document.body, {
-        attributes: true,
-        childList: true,
-        subtree: true,
-    });
+                    // Solo actualiza si cambió el path
+                    if (line.path !== newPath) {
+                        line.setOptions({ path: newPath });
+                    }
+                } catch (e) {
+                    /* ignore if removed */
+                }
+            }
+        });
+    };
 })();
+
+const scheduleArrowsOnEvent = () => {
+    scheduleLinePosition();
+};
+
+window.addEventListener("resize", scheduleArrowsOnEvent);
+window.addEventListener("scroll", scheduleArrowsOnEvent, true);
+
+const observerTarget = document.getElementById("animation") || document.body;
+const layoutObserver = new MutationObserver(scheduleArrowsOnEvent);
+layoutObserver.observe(observerTarget, {
+    attributes: true,
+    childList: true,
+    subtree: true,
+});
+
+scheduleLinePosition();
+
+// última configuración cargada (se actualiza en loadAndApplyConfig)
+let latestConfig = null;
 
 function easeInOutCubicSize(t) {
     return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -616,6 +670,7 @@ function applyArrowsConfig(config) {
         } else {
             arrows[layerKey].arrow_conv.show();
             arrows[layerKey].arrow_out.startSocket = "right";
+            arrows[layerKey].arrow_out.endSocket = "left";
             animateLineSize(
                 arrows[layerKey].arrow_conv,
                 arrows[layerKey].arrow_conv.size,
@@ -630,6 +685,7 @@ function applyArrowsConfig(config) {
             arrows[layerKey].arrow_deconv.hide();
         } else {
             arrows[layerKey].arrow_deconv.show();
+            arrows[layerKey].arrow_in.startSocket = "left";
             arrows[layerKey].arrow_in.endSocket = "right";
             animateLineSize(
                 arrows[layerKey].arrow_deconv,
@@ -664,12 +720,14 @@ function applyArrowsConfig(config) {
             console.error("No se pudo ocultar arrow_conv:", e);
         }
     }
+
+    scheduleLinePosition();
 }
 
 function applyConvConfig(details, layerNumber, convBlockNumber, bottleneck) {
     const distances = {
-        x: "128%",
-        y: "82%",
+        x: "140%",
+        y: "100%",
     };
 
     const signs = {
@@ -679,27 +737,28 @@ function applyConvConfig(details, layerNumber, convBlockNumber, bottleneck) {
     let sign = details.convIndex ^ (convBlockNumber - 1);
     if (bottleneck) sign = sign ^ 1;
 
-    const convElement = document.querySelector(
-        `[data-layer="${layerNumber}"] [data-conv-block="${convBlockNumber}"] [data-conv="${
-            details.convIndex + 1
-        }"] .convolution`
+    const convBox = getConvBox(
+        layerNumber,
+        convBlockNumber,
+        details.convIndex + 1
     );
+    const convElement = convBox ? convBox.querySelector(".convolution") : null;
 
-    if (
-        details.fromPos === posEnum.Normal &&
-        details.toPos === posEnum.Hidden
-    ) {
+    if (!convBox || !convElement) {
+        return;
+    }
+
+    if (details.fromPos === pos.Normal && details.toPos === pos.Hidden) {
         animate(convElement.parentElement, {
             duration: animationMs,
             opacity: 0,
+            // width: 0,
             onComplete: () => {
+                // convElement.parentElement.style.display = "none";
                 convElement.parentElement.style.position = "absolute";
             },
         });
-    } else if (
-        details.fromPos === posEnum.Normal &&
-        details.toPos === posEnum.Center
-    ) {
+    } else if (details.fromPos === pos.Normal && details.toPos === pos.Center) {
         sign = signs[sign ^ 1];
         animate(convElement.parentElement, {
             duration: animationMs,
@@ -713,10 +772,7 @@ function applyConvConfig(details, layerNumber, convBlockNumber, bottleneck) {
                 });
             },
         });
-    } else if (
-        details.fromPos === posEnum.Center &&
-        details.toPos === posEnum.Normal
-    ) {
+    } else if (details.fromPos === pos.Center && details.toPos === pos.Normal) {
         sign = signs[sign];
         animate(convElement.parentElement, {
             duration: animationMs / 2,
@@ -730,22 +786,18 @@ function applyConvConfig(details, layerNumber, convBlockNumber, bottleneck) {
                 });
             },
         });
-    } else if (
-        details.fromPos === posEnum.Hidden &&
-        details.toPos === posEnum.Normal
-    ) {
+    } else if (details.fromPos === pos.Hidden && details.toPos === pos.Normal) {
         animate(convElement.parentElement, {
             delay: animationMs / 2,
             duration: animationMs,
             opacity: 1,
+            // width: "2.7vw",
             onBegin: () => {
+                // convElement.parentElement.style.display = "flex";
                 convElement.parentElement.style.position = "relative";
             },
         });
-    } else if (
-        details.fromPos === posEnum.Center &&
-        details.toPos === posEnum.Hidden
-    ) {
+    } else if (details.fromPos === pos.Center && details.toPos === pos.Hidden) {
         sign = signs[sign];
         animate(convElement.parentElement, {
             duration: animationMs / 3,
@@ -763,19 +815,20 @@ function applyConvConfig(details, layerNumber, convBlockNumber, bottleneck) {
             delay: animationMs / 3,
             duration: (animationMs * 2) / 3,
             opacity: 0,
+            // width: 0,
             onComplete: () => {
+                // convElement.parentElement.style.display = "none";
                 convElement.parentElement.style.position = "absolute";
             },
         });
-    } else if (
-        details.fromPos === posEnum.Hidden &&
-        details.toPos === posEnum.Center
-    ) {
+    } else if (details.fromPos === pos.Hidden && details.toPos === pos.Center) {
         animate(convElement.parentElement, {
             delay: animationMs / 3,
             duration: animationMs / 3,
             opacity: 1,
+            // width: "2.7vw",
             onBegin: () => {
+                // convElement.parentElement.style.display = "flex";
                 convElement.parentElement.style.position = "relative";
             },
         });
@@ -795,7 +848,7 @@ function applyConvConfig(details, layerNumber, convBlockNumber, bottleneck) {
         });
     }
 
-    if (details.toPos !== posEnum.Hidden) {
+    if (details.toPos !== pos.Hidden) {
         animate(convElement, {
             width: `${details.widthPercent}%`,
             backgroundColor: details.backgroundColor,
@@ -821,7 +874,7 @@ function applyConvBlockConfig(
             prevState[`layer${layerNumber}`][`convBlock${convBlockNumber}`][
                 `posConv${convIndex}`
             ];
-        const toPos = convConfig ? posEnum.Normal : posEnum.Hidden;
+        const toPos = convConfig ? pos.Normal : pos.Hidden;
 
         detailsAnimation[convKey] = {
             convIndex,
@@ -832,8 +885,8 @@ function applyConvBlockConfig(
         if (convConfig) {
             const filters = convConfig.filters;
             const activation = convConfig.activation;
-            backgroundColor = filtersColorMap[activation] || "#FFFFFF";
-            widthPercent = filters
+            const backgroundColor = filtersColorMap[activation] || "#FFFFFF";
+            let widthPercent = filters
                 ? Math.min(9 * (Math.log2(filters) + 1), 100)
                 : 0;
 
@@ -844,24 +897,28 @@ function applyConvBlockConfig(
     });
 
     Object.values(detailsAnimation).forEach((details) => {
-        if (details.toPos === posEnum.Hidden) {
+        if (details.toPos === pos.Hidden) {
             const otherConvKey = details.convIndex === 0 ? "conv1" : "conv0";
-            detailsAnimation[otherConvKey].toPos = posEnum.Center;
+            detailsAnimation[otherConvKey].toPos = pos.Center;
         }
     });
 
-    const conv1 = document.querySelector(
-        `[data-layer="${layerNumber}"] [data-conv-block="${convBlockNumber}"] [data-conv="${
-            detailsAnimation.conv0.convIndex + 1
-        }"]`
+    const conv1 = getConvBox(
+        layerNumber,
+        convBlockNumber,
+        detailsAnimation.conv0.convIndex + 1
     );
-    const conv2 = document.querySelector(
-        `[data-layer="${layerNumber}"] [data-conv-block="${convBlockNumber}"] [data-conv="${
-            detailsAnimation.conv1.convIndex + 1
-        }"]`
+    const conv2 = getConvBox(
+        layerNumber,
+        convBlockNumber,
+        detailsAnimation.conv1.convIndex + 1
     );
 
-    if (detailsAnimation.conv0.toPos !== posEnum.Hidden) {
+    if (!conv1 || !conv2) {
+        return;
+    }
+
+    if (detailsAnimation.conv0.toPos !== pos.Hidden) {
         prevState[`layer${layerNumber}`][`convBlock${convBlockNumber}`].in =
             conv1;
         prevState[`layer${layerNumber}`][
@@ -874,7 +931,7 @@ function applyConvBlockConfig(
             `convBlock${convBlockNumber}`
         ].kernelSizeIn = pathConfig.conv1.kernelSize;
     }
-    if (detailsAnimation.conv1.toPos !== posEnum.Hidden) {
+    if (detailsAnimation.conv1.toPos !== pos.Hidden) {
         prevState[`layer${layerNumber}`][`convBlock${convBlockNumber}`].out =
             conv2;
         prevState[`layer${layerNumber}`][
@@ -926,6 +983,7 @@ function applyUNetConfig(config) {
                 marginRight: "-1%",
                 onComplete: () => {
                     layerElement.style.display = "none";
+                    // layerElement.style.position = "absolute";
                 },
             });
             prevState[`layer${layerNumber}`].active = false;
@@ -938,6 +996,7 @@ function applyUNetConfig(config) {
             marginRight: "1%",
             onBegin: () => {
                 layerElement.style.display = "flex";
+                // layerElement.style.position = "relative";
             },
         });
         prevState[`layer${layerNumber}`].active = true;
@@ -973,10 +1032,15 @@ async function loadAndApplyConfig(file) {
         const config = await response.json();
         latestConfig = config;
         applyUNetConfig(config);
+        scheduleLinePosition();
     } catch (error) {
         console.error(`Error al cargar ${file}:`, error);
     }
 }
+
+/* (() => {
+  loadAndApplyConfig("files/redes/" + "red0.json")
+})(); */
 
 let loopId = null; // Variable global para guardar el ID del intervalo
 

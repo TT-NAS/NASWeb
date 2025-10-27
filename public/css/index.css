@@ -32,6 +32,13 @@ body{
   background-color: var(--third-color);
 }
 
+.card.p-1.bg-light {
+  display: flex;
+  flex-direction: column;
+  height: 370px;
+}
+
+
 .glass-card {
   background: rgba(255, 255, 255, 0.2); /* Fondo semitransparente */
   border-radius: 20px;
@@ -194,7 +201,7 @@ input[type="number"].form-control {
 }
 
 .animation{
-  width: auto; 
+  width: auto;
   height: 300px;
 }
 
