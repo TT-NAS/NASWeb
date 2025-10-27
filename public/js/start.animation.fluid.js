@@ -670,7 +670,6 @@ function applyArrowsConfig(config) {
         } else {
             arrows[layerKey].arrow_conv.show();
             arrows[layerKey].arrow_out.startSocket = "right";
-            arrows[layerKey].arrow_out.endSocket = "left";
             animateLineSize(
                 arrows[layerKey].arrow_conv,
                 arrows[layerKey].arrow_conv.size,
@@ -685,7 +684,6 @@ function applyArrowsConfig(config) {
             arrows[layerKey].arrow_deconv.hide();
         } else {
             arrows[layerKey].arrow_deconv.show();
-            arrows[layerKey].arrow_in.startSocket = "left";
             arrows[layerKey].arrow_in.endSocket = "right";
             animateLineSize(
                 arrows[layerKey].arrow_deconv,
