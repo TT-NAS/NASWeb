@@ -9,4 +9,6 @@ router.post("/api/train", controller.api_train)
 
 router.post("/api/json", controller.api_json)
 
+router.post("/api/download/pkl", controller.api_get_pkl)
+
 module.exports = router;

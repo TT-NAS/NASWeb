@@ -75,4 +75,37 @@ actions.api_json = async (req, res) => {
   }
 }
 
+/**
+ * Recibe el cromosoma y hace una petición al api para obtener su binario y lo manda al front
+ * @param {Object} req Cromosoma en formato real
+ * @param {*} res 
+ * @returns Binario pkl
+ */
+actions.api_get_pkl = async (req, res) => {
+  try {
+    const body = req.body;
+    console.log(body)
+    const response = await fetch(`${API_URL}/download-model`, {
+      method: "post",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    })
+    if (!response.ok) {
+      throw new Error(`Solicitud fallida con código ${response.status}`)
+    }
+    // Lee el archivo como binario
+    const buffer = await response.arrayBuffer();
+
+    // Configura la respuesta HTTP para descarga
+    res.setHeader("Content-Type", "application/octet-stream");
+    res.setHeader("Content-Disposition", 'attachment; filename="model.pkl"');
+
+    // Envía el binario al cliente (front)
+    return res.send(Buffer.from(buffer));
+  } catch (e) {
+    console.error(e)
+    return res.status(500).json({error: "Error al intentar obtener el documento .pkl"})
+  }
+}
+
 module.exports = actions;

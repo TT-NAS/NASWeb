@@ -34,6 +34,7 @@ const resultStopReason = document.getElementById("result-stop-reason")
 // download
 const downloadButton = document.getElementById("button-download")
 const downloadJsonButton = document.getElementById("a-download-json")
+const downloadPklButton = document.getElementById("a-download-pickle")
 // training
 const trainingButton = document.getElementById("button-training")
 const parametersButton = document.getElementById("button-parameters_train")
@@ -262,6 +263,43 @@ function downloadJson() {
 }
 
 /**
+ * hace la petición al servidor para obtener el cromosoma en formato .pkl y lo descarga
+ */
+async function downloadPkl() {
+  try {
+    const json_data = JSON.parse(sessionStorage.getItem("best_chromosome"))
+    const res = await fetch(`/api/download/pkl`, {
+      method: "post",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({chromosome: json_data.real_codification})
+    })
+    // Comprueba la descarga
+    if (!res.ok) {
+      throw new Error(`Solicitud fallida con código ${response.status}`)
+    }
+    // Descarga documento
+    const blob = await res.blob()
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url;
+    a.download = "model.pkl"
+    document.body.appendChild(a);
+    a.click()
+    // Elimina los restos
+    document.body.removeChild(a);
+    // liberar memoria
+    URL.revokeObjectURL(url)
+  } catch (e) {
+    console.error(e)
+    Notiflix.Report.failure(
+      "Error",
+      "Ocurrió un error al intentar descargar el documento",
+      "De acuerdo"
+    )
+  }
+}
+
+/**
  * Muestra los resultados del entrenamiento en contenedor
  * @param {Object} results Resultados del entrenamiento de la arquitectura
  */
@@ -425,6 +463,7 @@ buttonLoadArchitecture.addEventListener("click", () => fileChromosoma.click())
 fileChromosoma.addEventListener("change", () => loadFile())
 navButtonArchitecture.addEventListener("click", () => changeViewsNav(animationPageIsActive, "animation"))
 navButtonChart.addEventListener("click", () => changeViewsNav(animationPageIsActive, "chart"))
+downloadPklButton.addEventListener("click", () => downloadPkl())
 
 // Eleva la tarjeta de resultados cuando su dropdown está abierto para evitar que quede oculta.
 document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach((toggle) => {
