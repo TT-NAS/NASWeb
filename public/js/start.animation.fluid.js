@@ -431,7 +431,7 @@ scheduleLinePosition = (() => {
                     const distance = getElementDistance(line.start, line.end);
 
                     // Si la distancia es corta, usa "straight", sino "grid"
-                    const threshold = 125; // Ajusta este valor según tus necesidades
+                    const threshold = 130; // Ajusta este valor según tus necesidades
                     const newPath = distance < threshold ? "straight" : "grid";
 
                     // Solo actualiza si cambió el path

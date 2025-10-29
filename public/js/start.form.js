@@ -322,34 +322,52 @@ async function startTraining() {
  * Cambia entre la vista de resultados y parámetros de búsqueda
  * @param {string} toActive Dice que contenedor se debe mostrar
  */
-function changeTrainingDisplay(toActive) {
-  if (toActive === "results") {
+function changeTrainingDisplay(trainingIsActive, toActive) {
+  if (toActive === "results" && trainingIsActive) {
     containerTrainResults.style.display = "block"
     containerTrainParameters.style.display = "none"
-  } else if (toActive === "parameters") {
+
+    parametersButton.classList.toggle("active")
+    resultsTrainButton.classList.toggle("active")
+    window.dispatchEvent(new Event('resize'));
+
+    trainingPageIsActive = false
+  } else if (toActive === "parameters" && !trainingIsActive) {
     containerTrainResults.style.display = "none"
     containerTrainParameters.style.display = "block"
+
+    parametersButton.classList.toggle("active")
+    resultsTrainButton.classList.toggle("active")
+    window.dispatchEvent(new Event('resize'));
+
+    trainingPageIsActive = true
   }
-  parametersButton.classList.toggle("active")
-  resultsTrainButton.classList.toggle("active")
-  window.dispatchEvent(new Event('resize'));
 }
 
 /**
  * Cambia entre las vistas de animación y grafica de convergencia
  * @param {string} toActive Dice el contenedor que debe mostrar
  */
-function changeViewsNav(toActive) {
-  if (toActive === "animation") {
+function changeViewsNav(animationIsActive, toActive) {
+  if (toActive === "animation" && !animationIsActive) {
     animation.style.display = "flex"
     canvasChart.style.display = "none"
-  } else if (toActive === "chart") {
+
+    navButtonArchitecture.classList.toggle("active")
+    navButtonChart.classList.toggle("active")
+    window.dispatchEvent(new Event('resize'));
+
+    animationPageIsActive = true
+  } else if (toActive === "chart" && animationIsActive) {
     animation.style.display = "none"
     canvasChart.style.display = "block"
+
+    navButtonArchitecture.classList.toggle("active")
+    navButtonChart.classList.toggle("active")
+    window.dispatchEvent(new Event('resize'));
+
+    animationPageIsActive = false
   }
-  navButtonArchitecture.classList.toggle("active")
-  navButtonChart.classList.toggle("active")
-  window.dispatchEvent(new Event('resize'));
 }
 
 /**
@@ -395,16 +413,18 @@ function loadFile() {
   lector.readAsText(file)
 }
 
+let animationPageIsActive = true
+let trainingPageIsActive = true
 // Reactions
 start_button.addEventListener("click", () => startSearch())
 downloadJsonButton.addEventListener("click", () => downloadJson())
 trainingButton.addEventListener("click", () => startTraining())
-parametersButton.addEventListener("click", () => changeTrainingDisplay("parameters"))
-resultsTrainButton.addEventListener("click", () => changeTrainingDisplay("results"))
+parametersButton.addEventListener("click", () => changeTrainingDisplay(trainingPageIsActive, "parameters"))
+resultsTrainButton.addEventListener("click", () => changeTrainingDisplay(trainingPageIsActive, "results"))
 buttonLoadArchitecture.addEventListener("click", () => fileChromosoma.click())
 fileChromosoma.addEventListener("change", () => loadFile())
-navButtonArchitecture.addEventListener("click", () => changeViewsNav("animation"))
-navButtonChart.addEventListener("click", () => changeViewsNav("chart"))
+navButtonArchitecture.addEventListener("click", () => changeViewsNav(animationPageIsActive, "animation"))
+navButtonChart.addEventListener("click", () => changeViewsNav(animationPageIsActive, "chart"))
 
 // Eleva la tarjeta de resultados cuando su dropdown está abierto para evitar que quede oculta.
 document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach((toggle) => {
