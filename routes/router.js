@@ -11,4 +11,6 @@ router.post("/api/json", controller.api_json)
 
 router.post("/api/download/pkl", controller.api_get_pkl)
 
+router.get("/api/download/pkl-url/:name", controller.api_get_pkl_by_name)
+
 module.exports = router;

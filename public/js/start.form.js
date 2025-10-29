@@ -300,23 +300,79 @@ async function downloadPkl() {
 }
 
 /**
+ * Descarga un archivo .pkl desde el servidor usando su nombre.
+ * @param {string} name - Nombre del archivo (sin extensión .pkl)
+ */
+async function downloadPklByName(name) {
+  try {
+    // Validar el parámetro
+    if (!name) {
+      throw new Error("No se especificó el nombre del archivo.");
+    }
+
+    let new_name = name.split("/")
+    new_name = new_name[new_name.length-1]
+
+    // Hacer la petición GET
+    const res = await fetch(`/api/download/pkl-url/${encodeURIComponent(new_name)}`, {
+      method: "GET",
+    });
+
+    // Verificar la respuesta
+    if (!res.ok) {
+      throw new Error(`Solicitud fallida con código ${res.status}`);
+    }
+
+    // Convertir la respuesta a binario
+    const blob = await res.blob();
+
+    // Crear URL temporal para descarga
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `model_trained.pkl`;
+    document.body.appendChild(a);
+    a.click();
+
+    // Limpieza
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    console.error(e);
+    Notiflix.Report.failure(
+      "Error",
+      "Ocurrió un error al intentar descargar el documento .pkl",
+      "De acuerdo"
+    );
+  }
+}
+
+
+/**
  * Muestra los resultados del entrenamiento en contenedor
  * @param {Object} results Resultados del entrenamiento de la arquitectura
+ * @param {String} pkl_url URL de descarga del documento pkl
  */
-function showTrainingResults(results) {
+function showTrainingResultsAndDownload(results, pkl_url) {
   const iou_train = document.getElementById("result-train-iou")
   const iou_val = document.getElementById("result-train-iou_val")
   const time = document.getElementById("result-train-time")
   const epoch = document.getElementById("result-train-epoch")
 
+  // Muestra los resultados
   iou_train.textContent = normalizeValue(results?.training_iou ?? "Error de carga", {decimals: 4});
   iou_val.textContent = normalizeValue(results?.validation_iou ?? "Error de carga", {decimals: 4});
   time.textContent = normalizeValue(results?.training_time ?? "Error de carga", {decimals: 4});
   epoch.textContent = normalizeValue(results?.last_epoch ?? "Error de carga");
-
+  // Activa el display
   resultsTrainButton.click();
+  // Descarga el documento entrenado
+  downloadPklByName(pkl_url)
 }
 
+/**
+ * Inicia el entrenamiento de la arquitectura en la sessión
+ */
 async function startTraining() {
   // toma los valores de los input
   const data_loader = document.getElementById("select-dataset").value
@@ -342,7 +398,7 @@ async function startTraining() {
     }
     const results = await res.json()
     // muestra los resultados
-    showTrainingResults(results)
+    showTrainingResultsAndDownload(results.register, results.pickle_url)
     console.log(results)
   } catch (e) {
     console.error(e)

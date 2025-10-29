@@ -84,7 +84,6 @@ actions.api_json = async (req, res) => {
 actions.api_get_pkl = async (req, res) => {
   try {
     const body = req.body;
-    console.log(body)
     const response = await fetch(`${API_URL}/download-model`, {
       method: "post",
       headers: { "Content-Type": "application/json" },
@@ -105,6 +104,33 @@ actions.api_get_pkl = async (req, res) => {
   } catch (e) {
     console.error(e)
     return res.status(500).json({error: "Error al intentar obtener el documento .pkl"})
+  }
+}
+
+/**
+ * Recibe la url a la cuál hacer la petición para descarga el ardhivo
+ * @param {Object} req URL de descarga
+ * @param {*} res 
+ * @returns Binario pkl
+ */
+actions.api_get_pkl_by_name = async (req, res) => {
+  try {
+    const { name } = req.params;
+    const response = await fetch(`${API_URL}/download/${name}`);
+
+    if (!response.ok) {
+      throw new Error(`Error al descargar modelo: ${response.status}`);
+    }
+
+    const buffer = await response.arrayBuffer();
+
+    // Enviar al front
+    res.setHeader("Content-Type", "application/octet-stream");
+    res.setHeader("Content-Disposition", `attachment; filename="${name}.pkl"`);
+    res.send(Buffer.from(buffer));
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al descargar el archivo .pkl" });
   }
 }
 
