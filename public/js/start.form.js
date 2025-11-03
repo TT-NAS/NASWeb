@@ -34,6 +34,7 @@ const resultStopReason = document.getElementById("result-stop-reason")
 // download
 const downloadButton = document.getElementById("button-download")
 const downloadJsonButton = document.getElementById("a-download-json")
+const downloadPklButton = document.getElementById("a-download-pickle")
 // training
 const trainingButton = document.getElementById("button-training")
 const parametersButton = document.getElementById("button-parameters_train")
@@ -137,28 +138,73 @@ function loadChart(vector = [9,8,7,6,5,4,3,2,1]) {
 }
 
 /**
+ * Transforma un cromosoma en formato de lista a formato json y lo muestra en la vista
+ * Usa los datos de la sesión, almacenados después de la búsqueda
+ */
+async function showArchitecture() {
+  const chromosome = JSON.parse(sessionStorage.getItem("best_chromosome")).real_codification
+  try {
+    // Hace una petición al end point
+    const res = await fetch("/api/json", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({chromosome})
+    })
+
+    if (!res.ok) {
+      throw new Error(`Solicitud fallida con código ${res.status}`)
+    }
+
+    const json_chromosome = await res.json()
+    // Muestra el cromosoma
+    console.log(json_chromosome)
+    if (json_chromosome?.unet) {
+      applyUNetConfig(json_chromosome)
+      applyArrowsConfig(json_chromosome.unet)
+      scheduleLinePosition()
+    } else {
+      throw new Error("Error con el formato de la arquitectura, no hay .unet")
+    }
+  
+  } catch (e) {
+    console.error(e)
+    Notiflix.Report.failure(
+        "Error",
+        "Ocurrió un error al reconocer el cromosoma",
+        "De acuerdo"
+      )
+  }
+}
+
+/**
  * Recoge los parámetros del formulario, inicia la búsqueda en el backend y actualiza los resultados mostrados.
  * Gestiona estados de carga y errores para ofrecer retroalimentación al usuario.
  */
 const startSearch = async () => {
   // Obtener valores de los inputs
-  const population_size = document.getElementById("range-population-size");
-  const f = document.getElementById("range-f");
-  const crossover_rate = document.getElementById("range-crossover");
-  const mutation_rate = document.getElementById("range-mutation");
-  const generations = document.getElementById("range-generations");
-  const train_final_arch = document.getElementById("checkbox");
-  
+  const population_size = Number(document.getElementById("range-population-size").value.trim());
+  const f = Number(document.getElementById("range-f").value.trim());
+  const crossover_rate = Number(document.getElementById("range-crossover").value.trim());
+  const mutation_rate = Number(document.getElementById("range-mutation").value.trim());
+  const generations = Number(document.getElementById("range-generations").value.trim());
+
   const body = {
-    population_size: population_size.value,
-    f: f.value,
-    crossover_rate: crossover_rate.value,
-    mutation_rate: mutation_rate.value,
-    generations: generations.value,
-    train_final_arch: Boolean(train_final_arch?.checked)
+    population_size: population_size,
+    f: f,
+    crossover_rate: crossover_rate,
+    mutation_rate: mutation_rate,
+    generations: generations
   }
+  console.log(body);
+  // Validar parámetros antes de enviar
+  const validation = await runValidation(validateSearchParams, body)
+  if (!validation.isValid) return reportValidationErrors(validation)
   // Muestra el cargando
   Notiflix.Loading.pulse("Buscando la mejor arquitectura...");
+  // Mueve scroll hasta arriba
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  // Muestra el cambio de arquitecturas
+  startLoop()
   try {
     // Envía los valores al back
     const response = await fetch(`/api/search`, {
@@ -181,8 +227,13 @@ const startSearch = async () => {
     // activa la descarga y el entrenamiento
     downloadButton.disabled = false
     trainingButton.disabled = false
+    // Detiene la animación de arquitecturas
+    stopLoop()
+    // Muestra la arquitectura
+    showArchitecture()
   } catch (e) {
     console.error(e)
+    stopLoop()
     Notiflix.Report.failure(
       "Error",
       "Ocurrió un error al procesar la petición",
@@ -214,23 +265,116 @@ function downloadJson() {
 }
 
 /**
+ * hace la petición al servidor para obtener el cromosoma en formato .pkl y lo descarga
+ */
+async function downloadPkl() {
+  try {
+    const json_data = JSON.parse(sessionStorage.getItem("best_chromosome"))
+    const res = await fetch(`/api/download/pkl`, {
+      method: "post",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({chromosome: json_data.real_codification})
+    })
+    // Comprueba la descarga
+    if (!res.ok) {
+      throw new Error(`Solicitud fallida con código ${response.status}`)
+    }
+    // Descarga documento
+    const blob = await res.blob()
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url;
+    a.download = "model.pkl"
+    document.body.appendChild(a);
+    a.click()
+    // Elimina los restos
+    document.body.removeChild(a);
+    // liberar memoria
+    URL.revokeObjectURL(url)
+  } catch (e) {
+    console.error(e)
+    Notiflix.Report.failure(
+      "Error",
+      "Ocurrió un error al intentar descargar el documento",
+      "De acuerdo"
+    )
+  }
+}
+
+/**
+ * Descarga un archivo .pkl desde el servidor usando su nombre.
+ * @param {string} name - Nombre del archivo (sin extensión .pkl)
+ */
+async function downloadPklByName(name) {
+  try {
+    // Validar el parámetro
+    if (!name) {
+      throw new Error("No se especificó el nombre del archivo.");
+    }
+
+    let new_name = name.split("/")
+    new_name = new_name[new_name.length-1]
+
+    // Hacer la petición GET
+    const res = await fetch(`/api/download/pkl-url/${encodeURIComponent(new_name)}`, {
+      method: "GET",
+    });
+
+    // Verificar la respuesta
+    if (!res.ok) {
+      throw new Error(`Solicitud fallida con código ${res.status}`);
+    }
+
+    // Convertir la respuesta a binario
+    const blob = await res.blob();
+
+    // Crear URL temporal para descarga
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `model_trained.pkl`;
+    document.body.appendChild(a);
+    a.click();
+
+    // Limpieza
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    console.error(e);
+    Notiflix.Report.failure(
+      "Error",
+      "Ocurrió un error al intentar descargar el documento .pkl",
+      "De acuerdo"
+    );
+  }
+}
+
+
+/**
  * Muestra los resultados del entrenamiento en contenedor
  * @param {Object} results Resultados del entrenamiento de la arquitectura
+ * @param {String} pkl_url URL de descarga del documento pkl
  */
-function showTrainingResults(results) {
+function showTrainingResultsAndDownload(results, pkl_url) {
   const iou_train = document.getElementById("result-train-iou")
   const iou_val = document.getElementById("result-train-iou_val")
   const time = document.getElementById("result-train-time")
   const epoch = document.getElementById("result-train-epoch")
 
+  // Muestra los resultados
   iou_train.textContent = normalizeValue(results?.training_iou ?? "Error de carga", {decimals: 4});
   iou_val.textContent = normalizeValue(results?.validation_iou ?? "Error de carga", {decimals: 4});
   time.textContent = normalizeValue(results?.training_time ?? "Error de carga", {decimals: 4});
   epoch.textContent = normalizeValue(results?.last_epoch ?? "Error de carga");
-
+  // Activa el display
   resultsTrainButton.click();
+  // Descarga el documento entrenado
+  downloadPklByName(pkl_url)
 }
 
+/**
+ * Inicia el entrenamiento de la arquitectura en la sessión
+ */
 async function startTraining() {
   // toma los valores de los input
   const data_loader = document.getElementById("select-dataset").value
@@ -239,6 +383,19 @@ async function startTraining() {
   const chromosome = JSON.parse(sessionStorage.getItem("best_chromosome")).real_codification
   // Muestra el cargando
   Notiflix.Loading.dots("Entrenando la arquitectura arquitectura...");
+  // Valida los parámetros antes de enviar
+  const body = {
+    data_loader,
+    dataset_len,
+    epochs,
+    chromosome
+  }
+  const validation = await runValidation(validateTrainingParams, body)
+  if (!validation.isValid) {
+    Notiflix.Loading.remove();
+    return reportValidationErrors(validation)
+  }
+  // Envía la petición al servidor
   try {
     // Envía la petición al servidor
     const res = await fetch("/api/train", {
@@ -256,7 +413,7 @@ async function startTraining() {
     }
     const results = await res.json()
     // muestra los resultados
-    showTrainingResults(results)
+    showTrainingResultsAndDownload(results.register, results.pickle_url)
     console.log(results)
   } catch (e) {
     console.error(e)
@@ -274,34 +431,52 @@ async function startTraining() {
  * Cambia entre la vista de resultados y parámetros de búsqueda
  * @param {string} toActive Dice que contenedor se debe mostrar
  */
-function changeTrainingDisplay(toActive) {
-  if (toActive === "results") {
+function changeTrainingDisplay(trainingIsActive, toActive) {
+  if (toActive === "results" && trainingIsActive) {
     containerTrainResults.style.display = "block"
     containerTrainParameters.style.display = "none"
-  } else if (toActive === "parameters") {
+
+    parametersButton.classList.toggle("active")
+    resultsTrainButton.classList.toggle("active")
+    window.dispatchEvent(new Event('resize'));
+
+    trainingPageIsActive = false
+  } else if (toActive === "parameters" && !trainingIsActive) {
     containerTrainResults.style.display = "none"
     containerTrainParameters.style.display = "block"
+
+    parametersButton.classList.toggle("active")
+    resultsTrainButton.classList.toggle("active")
+    window.dispatchEvent(new Event('resize'));
+
+    trainingPageIsActive = true
   }
-  parametersButton.classList.toggle("active")
-  resultsTrainButton.classList.toggle("active")
-  window.dispatchEvent(new Event('resize'));
 }
 
 /**
  * Cambia entre las vistas de animación y grafica de convergencia
  * @param {string} toActive Dice el contenedor que debe mostrar
  */
-function changeViewsNav(toActive) {
-  if (toActive === "animation") {
-    animation.style.display = "block"
+function changeViewsNav(animationIsActive, toActive) {
+  if (toActive === "animation" && !animationIsActive) {
+    animation.style.display = "flex"
     canvasChart.style.display = "none"
-  } else if (toActive === "chart") {
+
+    navButtonArchitecture.classList.toggle("active")
+    navButtonChart.classList.toggle("active")
+    window.dispatchEvent(new Event('resize'));
+
+    animationPageIsActive = true
+  } else if (toActive === "chart" && animationIsActive) {
     animation.style.display = "none"
     canvasChart.style.display = "block"
+
+    navButtonArchitecture.classList.toggle("active")
+    navButtonChart.classList.toggle("active")
+    window.dispatchEvent(new Event('resize'));
+
+    animationPageIsActive = false
   }
-  navButtonArchitecture.classList.toggle("active")
-  navButtonChart.classList.toggle("active")
-  window.dispatchEvent(new Event('resize'));
 }
 
 /**
@@ -347,16 +522,19 @@ function loadFile() {
   lector.readAsText(file)
 }
 
+let animationPageIsActive = true
+let trainingPageIsActive = true
 // Reactions
 start_button.addEventListener("click", () => startSearch())
 downloadJsonButton.addEventListener("click", () => downloadJson())
 trainingButton.addEventListener("click", () => startTraining())
-parametersButton.addEventListener("click", () => changeTrainingDisplay("parameters"))
-resultsTrainButton.addEventListener("click", () => changeTrainingDisplay("results"))
+parametersButton.addEventListener("click", () => changeTrainingDisplay(trainingPageIsActive, "parameters"))
+resultsTrainButton.addEventListener("click", () => changeTrainingDisplay(trainingPageIsActive, "results"))
 buttonLoadArchitecture.addEventListener("click", () => fileChromosoma.click())
 fileChromosoma.addEventListener("change", () => loadFile())
-navButtonArchitecture.addEventListener("click", () => changeViewsNav("animation"))
-navButtonChart.addEventListener("click", () => changeViewsNav("chart"))
+navButtonArchitecture.addEventListener("click", () => changeViewsNav(animationPageIsActive, "animation"))
+navButtonChart.addEventListener("click", () => changeViewsNav(animationPageIsActive, "chart"))
+downloadPklButton.addEventListener("click", () => downloadPkl())
 
 // Eleva la tarjeta de resultados cuando su dropdown está abierto para evitar que quede oculta.
 document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach((toggle) => {

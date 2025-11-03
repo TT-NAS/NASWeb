@@ -1,0 +1,109 @@
+{
+    "binary": "AAIQIAGFRIJIXAA6V4DOJVSUOAAA7PQAF6J56QQ_192",
+    "unet": {
+        "layer0": {
+            "convPath": {
+                "conv0": null,
+                "conv1": {
+                    "filters": 64,
+                    "kernelSize": 3,
+                    "activation": "linear"
+                },
+                "pooling": "max"
+            },
+            "deconvPath": {
+                "conv0": null,
+                "conv1": {
+                    "filters": 128,
+                    "kernelSize": 3,
+                    "activation": "selu"
+                },
+                "concat": false
+            }
+        },
+        "layer1": {
+            "convPath": {
+                "conv0": {
+                    "filters": 32,
+                    "kernelSize": 1,
+                    "activation": "elu"
+                },
+                "conv1": {
+                    "filters": 32,
+                    "kernelSize": 1,
+                    "activation": "tanh"
+                },
+                "pooling": "average"
+            },
+            "deconvPath": {
+                "conv0": null,
+                "conv1": {
+                    "filters": 512,
+                    "kernelSize": 3,
+                    "activation": "tanh"
+                },
+                "concat": true
+            }
+        },
+        "layer2": {
+            "convPath": {
+                "conv0": {
+                    "filters": 128,
+                    "kernelSize": 1,
+                    "activation": "selu"
+                },
+                "conv1": {
+                    "filters": 1024,
+                    "kernelSize": 3,
+                    "activation": "softplus"
+                },
+                "pooling": "max"
+            },
+            "deconvPath": {
+                "conv0": {
+                    "filters": 8,
+                    "kernelSize": 3,
+                    "activation": "tanh"
+                },
+                "conv1": {
+                    "filters": 1,
+                    "kernelSize": 5,
+                    "activation": "linear"
+                },
+                "concat": false
+            }
+        },
+        "layer3": {
+            "convPath": {
+                "conv0": null,
+                "conv1": {
+                    "filters": 16,
+                    "kernelSize": 5,
+                    "activation": "sigmoid"
+                },
+                "pooling": "average"
+            },
+            "deconvPath": {
+                "conv0": null,
+                "conv1": {
+                    "filters": 32,
+                    "kernelSize": 5,
+                    "activation": "softmax"
+                },
+                "concat": true
+            }
+        },
+        "bottleneck": {
+            "conv0": {
+                "filters": 2,
+                "kernelSize": 5,
+                "activation": "sigmoid"
+            },
+            "conv1": {
+                "filters": 256,
+                "kernelSize": 1,
+                "activation": "elu"
+            }
+        }
+    }
+}

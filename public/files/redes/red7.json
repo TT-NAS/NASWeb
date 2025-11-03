@@ -1,0 +1,78 @@
+{
+    "binary": "AAAAAAAAAABGBAA2HAADK4ABRQAA3BRANDAAHXA_192",
+    "unet": {
+        "layer0": null,
+        "layer1": {
+            "convPath": {
+                "conv0": null,
+                "conv1": {
+                    "filters": 64,
+                    "kernelSize": 5,
+                    "activation": "linear"
+                },
+                "pooling": "max"
+            },
+            "deconvPath": {
+                "conv0": null,
+                "conv1": {
+                    "filters": 256,
+                    "kernelSize": 1,
+                    "activation": "sigmoid"
+                },
+                "concat": false
+            }
+        },
+        "layer2": {
+            "convPath": {
+                "conv0": null,
+                "conv1": {
+                    "filters": 2,
+                    "kernelSize": 3,
+                    "activation": "tanh"
+                },
+                "pooling": "average"
+            },
+            "deconvPath": {
+                "conv0": null,
+                "conv1": {
+                    "filters": 8,
+                    "kernelSize": 1,
+                    "activation": "softmax"
+                },
+                "concat": false
+            }
+        },
+        "layer3": {
+            "convPath": {
+                "conv0": null,
+                "conv1": {
+                    "filters": 8,
+                    "kernelSize": 5,
+                    "activation": "linear"
+                },
+                "pooling": "average"
+            },
+            "deconvPath": {
+                "conv0": {
+                    "filters": 1,
+                    "kernelSize": 1,
+                    "activation": "linear"
+                },
+                "conv1": {
+                    "filters": 256,
+                    "kernelSize": 1,
+                    "activation": "selu"
+                },
+                "concat": false
+            }
+        },
+        "bottleneck": {
+            "conv0": null,
+            "conv1": {
+                "filters": 512,
+                "kernelSize": 3,
+                "activation": "softmax"
+            }
+        }
+    }
+}

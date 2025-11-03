@@ -1,0 +1,90 @@
+{
+    "binary": "AAAAAAAABYPQ76H3QEBWA4ADOE3EQMQAELQACBI_192",
+    "unet": {
+        "layer0": null,
+        "layer1": {
+            "convPath": {
+                "conv0": {
+                    "filters": 16,
+                    "kernelSize": 1,
+                    "activation": "softplus"
+                },
+                "conv1": {
+                    "filters": 1024,
+                    "kernelSize": 1,
+                    "activation": "sigmoid"
+                },
+                "pooling": "average"
+            },
+            "deconvPath": {
+                "conv0": {
+                    "filters": 512,
+                    "kernelSize": 1,
+                    "activation": "sigmoid"
+                },
+                "conv1": {
+                    "filters": 256,
+                    "kernelSize": 5,
+                    "activation": "linear"
+                },
+                "concat": false
+            }
+        },
+        "layer2": {
+            "convPath": {
+                "conv0": {
+                    "filters": 64,
+                    "kernelSize": 1,
+                    "activation": "softplus"
+                },
+                "conv1": {
+                    "filters": 8,
+                    "kernelSize": 1,
+                    "activation": "relu"
+                },
+                "pooling": "average"
+            },
+            "deconvPath": {
+                "conv0": null,
+                "conv1": {
+                    "filters": 256,
+                    "kernelSize": 5,
+                    "activation": "relu"
+                },
+                "concat": false
+            }
+        },
+        "layer3": {
+            "convPath": {
+                "conv0": {
+                    "filters": 8,
+                    "kernelSize": 5,
+                    "activation": "elu"
+                },
+                "conv1": {
+                    "filters": 64,
+                    "kernelSize": 1,
+                    "activation": "selu"
+                },
+                "pooling": "max"
+            },
+            "deconvPath": {
+                "conv0": null,
+                "conv1": {
+                    "filters": 64,
+                    "kernelSize": 3,
+                    "activation": "sigmoid"
+                },
+                "concat": false
+            }
+        },
+        "bottleneck": {
+            "conv0": null,
+            "conv1": {
+                "filters": 64,
+                "kernelSize": 1,
+                "activation": "tanh"
+            }
+        }
+    }
+}

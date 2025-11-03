@@ -1,0 +1,101 @@
+{
+    "binary": "AAYQYABNEAB2L3RN4FDUKEABWYABZIQAN6IAHVQ_192",
+    "unet": {
+        "layer0": {
+            "convPath": {
+                "conv0": null,
+                "conv1": {
+                    "filters": 128,
+                    "kernelSize": 3,
+                    "activation": "linear"
+                },
+                "pooling": "average"
+            },
+            "deconvPath": {
+                "conv0": null,
+                "conv1": {
+                    "filters": 4,
+                    "kernelSize": 5,
+                    "activation": "softsign"
+                },
+                "concat": true
+            }
+        },
+        "layer1": {
+            "convPath": {
+                "conv0": null,
+                "conv1": {
+                    "filters": 16,
+                    "kernelSize": 3,
+                    "activation": "elu"
+                },
+                "pooling": "average"
+            },
+            "deconvPath": {
+                "conv0": {
+                    "filters": 256,
+                    "kernelSize": 5,
+                    "activation": "relu"
+                },
+                "conv1": {
+                    "filters": 8,
+                    "kernelSize": 5,
+                    "activation": "softmax"
+                },
+                "concat": false
+            }
+        },
+        "layer2": {
+            "convPath": {
+                "conv0": {
+                    "filters": 32,
+                    "kernelSize": 1,
+                    "activation": "sigmoid"
+                },
+                "conv1": {
+                    "filters": 64,
+                    "kernelSize": 3,
+                    "activation": "softsign"
+                },
+                "pooling": "max"
+            },
+            "deconvPath": {
+                "conv0": null,
+                "conv1": {
+                    "filters": 8,
+                    "kernelSize": 5,
+                    "activation": "selu"
+                },
+                "concat": false
+            }
+        },
+        "layer3": {
+            "convPath": {
+                "conv0": null,
+                "conv1": {
+                    "filters": 1024,
+                    "kernelSize": 3,
+                    "activation": "softsign"
+                },
+                "pooling": "max"
+            },
+            "deconvPath": {
+                "conv0": null,
+                "conv1": {
+                    "filters": 256,
+                    "kernelSize": 5,
+                    "activation": "softmax"
+                },
+                "concat": true
+            }
+        },
+        "bottleneck": {
+            "conv0": null,
+            "conv1": {
+                "filters": 512,
+                "kernelSize": 3,
+                "activation": "selu"
+            }
+        }
+    }
+}

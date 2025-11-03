@@ -1,0 +1,129 @@
+{
+    "binary": "IRIRKEKEPCHCFYRYR5I5IXKHKH5D5C7I7I7EPEI_192",
+    "unet": {
+        "layer0": {
+            "convPath": {
+                "conv0": {
+                    "filters": 64,
+                    "kernelSize": 3,
+                    "activation": "relu"
+                },
+                "conv1": {
+                    "filters": 64,
+                    "kernelSize": 3,
+                    "activation": "relu"
+                },
+                "pooling": "max"
+            },
+            "deconvPath": {
+                "conv0": {
+                    "filters": 64,
+                    "kernelSize": 3,
+                    "activation": "relu"
+                },
+                "conv1": {
+                    "filters": 64,
+                    "kernelSize": 3,
+                    "activation": "relu"
+                },
+                "concat": true
+            }
+        },
+        "layer1": {
+            "convPath": {
+                "conv0": {
+                    "filters": 128,
+                    "kernelSize": 3,
+                    "activation": "relu"
+                },
+                "conv1": {
+                    "filters": 128,
+                    "kernelSize": 3,
+                    "activation": "relu"
+                },
+                "pooling": "max"
+            },
+            "deconvPath": {
+                "conv0": {
+                    "filters": 128,
+                    "kernelSize": 3,
+                    "activation": "relu"
+                },
+                "conv1": {
+                    "filters": 128,
+                    "kernelSize": 3,
+                    "activation": "relu"
+                },
+                "concat": true
+            }
+        },
+        "layer2": {
+            "convPath": {
+                "conv0": {
+                    "filters": 256,
+                    "kernelSize": 3,
+                    "activation": "relu"
+                },
+                "conv1": {
+                    "filters": 256,
+                    "kernelSize": 3,
+                    "activation": "relu"
+                },
+                "pooling": "max"
+            },
+            "deconvPath": {
+                "conv0": {
+                    "filters": 256,
+                    "kernelSize": 3,
+                    "activation": "relu"
+                },
+                "conv1": {
+                    "filters": 256,
+                    "kernelSize": 3,
+                    "activation": "relu"
+                },
+                "concat": true
+            }
+        },
+        "layer3": {
+            "convPath": {
+                "conv0": {
+                    "filters": 512,
+                    "kernelSize": 3,
+                    "activation": "relu"
+                },
+                "conv1": {
+                    "filters": 512,
+                    "kernelSize": 3,
+                    "activation": "relu"
+                },
+                "pooling": "max"
+            },
+            "deconvPath": {
+                "conv0": {
+                    "filters": 512,
+                    "kernelSize": 3,
+                    "activation": "relu"
+                },
+                "conv1": {
+                    "filters": 512,
+                    "kernelSize": 3,
+                    "activation": "relu"
+                },
+                "concat": true
+            }
+        },
+        "bottleneck": {
+            "conv0": {
+                "filters": 1024,
+                "kernelSize": 3,
+                "activation": "relu"
+            },
+            "conv1": {
+                "filters": 1024,
+                "kernelSize": 3,
+                "activation": "relu"
+            }
+        }
+    }
+}
