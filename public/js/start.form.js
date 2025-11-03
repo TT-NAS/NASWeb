@@ -182,21 +182,23 @@ async function showArchitecture() {
  */
 const startSearch = async () => {
   // Obtener valores de los inputs
-  const population_size = document.getElementById("range-population-size");
-  const f = document.getElementById("range-f");
-  const crossover_rate = document.getElementById("range-crossover");
-  const mutation_rate = document.getElementById("range-mutation");
-  const generations = document.getElementById("range-generations");
-  const train_final_arch = document.getElementById("checkbox");
-  
+  const population_size = Number(document.getElementById("range-population-size").value.trim());
+  const f = Number(document.getElementById("range-f").value.trim());
+  const crossover_rate = Number(document.getElementById("range-crossover").value.trim());
+  const mutation_rate = Number(document.getElementById("range-mutation").value.trim());
+  const generations = Number(document.getElementById("range-generations").value.trim());
+
   const body = {
-    population_size: population_size.value,
-    f: f.value,
-    crossover_rate: crossover_rate.value,
-    mutation_rate: mutation_rate.value,
-    generations: generations.value,
-    train_final_arch: Boolean(train_final_arch?.checked)
+    population_size: population_size,
+    f: f,
+    crossover_rate: crossover_rate,
+    mutation_rate: mutation_rate,
+    generations: generations
   }
+  console.log(body);
+  // Validar parámetros antes de enviar
+  const validation = await runValidation(validateSearchParams, body)
+  if (!validation.isValid) return reportValidationErrors(validation)
   // Muestra el cargando
   Notiflix.Loading.pulse("Buscando la mejor arquitectura...");
   // Mueve scroll hasta arriba
@@ -381,6 +383,19 @@ async function startTraining() {
   const chromosome = JSON.parse(sessionStorage.getItem("best_chromosome")).real_codification
   // Muestra el cargando
   Notiflix.Loading.dots("Entrenando la arquitectura arquitectura...");
+  // Valida los parámetros antes de enviar
+  const body = {
+    data_loader,
+    dataset_len,
+    epochs,
+    chromosome
+  }
+  const validation = await runValidation(validateTrainingParams, body)
+  if (!validation.isValid) {
+    Notiflix.Loading.remove();
+    return reportValidationErrors(validation)
+  }
+  // Envía la petición al servidor
   try {
     // Envía la petición al servidor
     const res = await fetch("/api/train", {
