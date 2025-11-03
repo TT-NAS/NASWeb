@@ -27,9 +27,23 @@ app.get("/", (req, res) => {
 })
 
 // Errors
+// 404 handler -> renderizar página de error
 app.use((req, res) => {
-  res.status(404);
-  res.send("Error 404 :(")
+  res.status(404)
+  res.render('error', { status: 404, message: 'Página no encontrada' })
+})
+
+// Error handler -> captura errores internos y muestra la vista de error
+app.use((err, req, res, next) => {
+  console.error(err)
+  const status = err.status || 500
+  const message = err.message || 'Error interno del servidor'
+  res.status(status)
+  // Si la petición es JSON (API), devolver JSON
+  if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
+    return res.json({ error: message })
+  }
+  res.render('error', { status, message })
 })
 
 // Start server
