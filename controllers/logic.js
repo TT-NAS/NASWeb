@@ -1,6 +1,15 @@
 const actions = {}
 const API_URL = "http://127.0.0.1:8000"
 
+// Importar funciones de validación
+const {
+  runValidation,
+  reportValidationErrors,
+  validateSearchParams,
+  validateTrainingParams,
+  validateChromosome
+} = require('./validationData')
+
 /**
  * Hace la petición al api para iniciar la búsqueda
  * @param {*} req 
@@ -10,6 +19,12 @@ actions.api_search = async (req, res) => {
   try {
     const body = req.body
     // agregar validación
+    const validation = await runValidation(validateSearchParams, body)
+    if (!validation.isValid) {
+      // devolver errores al cliente con 400
+      return res.status(400).json({ error: 'Validation failed', details: validation.errors })
+    }
+
     const response = await fetch(`${API_URL}/search`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -31,6 +46,12 @@ actions.api_search = async (req, res) => {
 actions.api_train = async (req, res) => {
   try {
     const body = req.body;
+    // agregar validación
+    const validation = await runValidation(validateTrainingParams, body)
+    if (!validation.isValid) {
+      return res.status(400).json({ error: 'Validation failed', details: validation.errors })
+    }
+
     const response = await fetch(
       `${API_URL}/train`,
       {
@@ -59,6 +80,12 @@ actions.api_train = async (req, res) => {
 actions.api_json = async (req, res) => {
   try {
     const body = req.body;
+    // agregar validación
+    const validation = await runValidation(validateChromosome, body)
+    if (!validation.isValid) {
+      return res.status(400).json({ error: 'Validation failed', details: validation.errors })
+    }
+
     const response = await fetch(`${API_URL}/json`, {
       method: "post",
       headers: { "Content-Type": "application/json" },
@@ -84,6 +111,12 @@ actions.api_json = async (req, res) => {
 actions.api_get_pkl = async (req, res) => {
   try {
     const body = req.body;
+    // agregar validación
+    const validation = await runValidation(validateChromosome, body)
+    if (!validation.isValid) {
+      return res.status(400).json({ error: 'Validation failed', details: validation.errors })
+    }
+
     const response = await fetch(`${API_URL}/download-model`, {
       method: "post",
       headers: { "Content-Type": "application/json" },
