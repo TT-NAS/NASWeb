@@ -4,8 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon index.js"
+    "test": "jest",
+    "dev": "nodemon index.js",
+    "docs": "jsdoc -c jsdoc.json",
+    "start": "node index.js"
   },
   "nodemonConfig": {
     "ignore": [
@@ -23,5 +25,9 @@
     "morgan": "^1.10.1",
     "nodemon": "^3.1.10",
     "notiflix": "^3.2.8"
+  },
+  "devDependencies": {
+    "jest": "^30.2.0",
+    "jsdoc": "^4.0.5"
   }
 }

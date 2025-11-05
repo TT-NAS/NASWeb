@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: controllers/validationData.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: controllers/validationData.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @module controllers/validationData
+ * @file controllers/validationData.js
+ * Utility functions for validating request payloads.
+ */
+
+/**
+ * Returns true when the received value is an empty string.
+ * @param {string|number|null|undefined} text Value to evaluate.
+ * @returns {boolean}
+ */
+function strIsEmpty(text) {
+  return text === ""
+}
+
+/**
+ * Checks if a value can be safely converted to a finite number.
+ * @param {unknown} num Value to validate.
+ * @returns {boolean}
+ */
+function isNum(num) {
+  // Acepta números en formato string o number
+  return !Number.isNaN(Number(num))
+}
+
+/**
+ * Determines whether the provided value represents a positive integer.
+ * @param {unknown} value Value to validate.
+ * @returns {boolean}
+ */
+function isPositiveInteger(value) {
+  const n = Number(value)
+  return Number.isInteger(n) &amp;&amp; n > 0
+}
+
+/**
+ * Validates that the provided numeric value lies within the inclusive range [min, max].
+ * @param {unknown} value Value to validate.
+ * @param {number} min Minimum accepted value.
+ * @param {number} max Maximum accepted value.
+ * @returns {boolean}
+ */
+function isBetween(value, min, max) {
+  const n = Number(value)
+  if (Number.isNaN(n) || !Number.isFinite(n)) return false
+  return n >= min &amp;&amp; n &lt;= max
+}
+
+// validation functions
+
+/**
+ * Checks whether the chromosome payload contains a valid chromosome array.
+ * @param {Object} body Request payload.
+ * @returns {{isValid: boolean, errors: Object|null}}
+ */
+function validateChromosome(body) { 
+  const errors = {}
+
+  // chromosome -> array u objeto (no se valida más aquí)
+  if (!Array.isArray(body.chromosome)) {
+    errors.chromosome = 'chromosome debe ser un array u objeto válido'
+  }
+  if (Object.keys(errors).length > 0) {
+    return { isValid: false, errors }
+  }
+  return { isValid: true, errors: null }
+}
+
+/**
+ * Valida que los parámetros del entrenamiento sean correctos.
+ * @param {Object} body {population_size, f, crossover_rate, mutation_rate, generations}
+ * @returns {{isValid: boolean, errors: Object|null, parsed?: Object}}
+ */
+function validateSearchParams(body) {
+  const errors = {}
+
+  // Campos esperados
+  const fields = [
+    'population_size',
+    'f',
+    'crossover_rate',
+    'mutation_rate',
+    'generations'
+  ]
+
+  // Check presence
+  fields.forEach((field) => {
+    if (body[field] === undefined || body[field] === null || strIsEmpty(body[field])) {
+      errors[field] = 'Campo requerido'
+    }
+  })
+
+  // Si faltan campos, devolver errores de inmediato
+  if (Object.keys(errors).length > 0) {
+    return { isValid: false, errors }
+  }
+
+  // Validaciones por campo
+  // population_size -> entero positivo (>=2)
+  if (!isPositiveInteger(body.population_size) || Number(body.population_size) &lt; 2) {
+    errors.population_size = 'population_size debe ser un entero >= 2'
+  }
+
+  // f -> número real > 0 (acepta decimales)
+  if (!isNum(body.f) || Number(body.f) &lt;= 0) {
+    errors.f = 'f debe ser un número > 0'
+  }
+
+  // crossover_rate -> [0,1]
+  if (!isBetween(body.crossover_rate, 0, 1)) {
+    errors.crossover_rate = 'crossover_rate debe estar entre 0 y 1'
+  }
+
+  // mutation_rate -> [0,1]
+  if (!isBetween(body.mutation_rate, 0, 1)) {
+    errors.mutation_rate = 'mutation_rate debe estar entre 0 y 1'
+  }
+
+  // generations -> entero positivo
+  if (!isPositiveInteger(body.generations) || Number(body.generations) &lt; 1) {
+    errors.generations = 'generations debe ser un entero >= 1'
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return { isValid: false, errors }
+  }
+
+  // Si todo ok, devolver datos parseados (números)
+  const parsed = {
+    population_size: Number(body.population_size),
+    f: Number(body.f),
+    crossover_rate: Number(body.crossover_rate),
+    mutation_rate: Number(body.mutation_rate),
+    generations: Number(body.generations)
+  }
+
+  return { isValid: true, errors: null, parsed }
+}
+
+/**
+ * Valida los parámetros de entrenamiento.
+ * @param {Object} body {data_loader, dataset_len, epochs, chromosome}
+ * @returns {{isValid: boolean, errors: Object|null, parsed?: Object}}
+ */
+function validateTrainingParams(body) {
+  const errors = {}
+
+  // Campos esperados
+  const fields = [
+    'data_loader',
+    'dataset_len',
+    'epochs',
+    'chromosome'
+  ]
+
+  // Check presence
+  fields.forEach((field) => {
+    if (body[field] === undefined || body[field] === null || strIsEmpty(body[field])) {
+      errors[field] = 'Campo requerido'
+    }
+  })
+
+  // Si faltan campos, devolver errores de inmediato
+  if (Object.keys(errors).length > 0) {
+    return { isValid: false, errors }
+  }
+
+  // Validaciones por campo
+  // data_loader -> string no vacío
+  if (strIsEmpty(body.data_loader)) {
+    errors.data_loader = 'data_loader debe ser un string no vacío'
+  }
+
+  // dataset_len -> entero positivo
+  if (!isPositiveInteger(body.dataset_len)) {
+    errors.dataset_len = 'dataset_len debe ser un entero positivo'
+  }
+
+  // epochs -> entero positivo
+  if (!isPositiveInteger(body.epochs) || isBetween(body.epochs, 1, 20) === false) {
+    errors.epochs = 'epochs debe ser un entero positivo entre 1 y 20'
+  }
+
+  // chromosome -> array u objeto (no se valida más aquí)
+  if (!Array.isArray(body.chromosome)) {
+    errors.chromosome = 'chromosome debe ser un array u objeto válido'
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return { isValid: false, errors }
+  }
+
+  // Si todo ok, devolver datos parseados (números)
+  const parsed = {
+    data_loader: String(body.data_loader),
+    dataset_len: Number(body.dataset_len),
+    epochs: Number(body.epochs),
+    chromosome: body.chromosome
+  }
+
+  return { isValid: true, errors: null, parsed }
+}
+
+/**
+ * Ejecuta una función de validación y valida el formato de su resultado.
+ * @param {Function} validationFunction Función de validación a ejecutar.
+ * @param {Object} payload Datos a validar.
+ * @returns {Promise&lt;{isValid: boolean, errors: Object|null}>}
+ */
+async function runValidation(validationFunction, payload) {
+  if (typeof validationFunction !== 'function') {
+    throw new TypeError('validationFunction debe ser una función')
+  }
+  const validation = await validationFunction(payload)
+  // esperar objeto con isValid boolean y errors (opcional)
+  if (!validation || typeof validation.isValid !== 'boolean') {
+    throw new Error('validationFunction debe devolver {isValid: boolean, errors: object|null}')
+  }
+  return validation
+}
+
+/**
+ * Lanza una excepción cuando la validación contiene errores.
+ * @param {{isValid: boolean, errors?: Object}} validation Resultado de la validación.
+ */
+function reportValidationErrors(validation) {
+  if (!validation || validation.isValid) return
+  throw new Error('Errores de validación: ' + JSON.stringify(validation.errors))
+}
+
+// Exportar para que otros controladores (ej. controllers/logic.js) puedan usarlas
+module.exports = {
+  validateChromosome,
+  validateSearchParams,
+  validateTrainingParams,
+  runValidation,
+  reportValidationErrors
+}</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Namespaces</h3><ul><li><a href="public%250DJavaScript%2520para%2520la%2520gesti%25C3%25B3n%2520de%2520animaciones%2520fluidas%2520en%2520la%2520interfaz..html">publicJavaScript para la gestión de animaciones fluidas en la interfaz.</a></li><li><a href="public%250DJavaScript%2520para%2520la%2520gesti%25C3%25B3n%2520del%2520formulario%2520de%2520inicio%2520y%2520la%2520interacci%25C3%25B3n%2520con%2520la%2520API..html">publicJavaScript para la gestión del formulario de inicio y la interacción con la API.</a></li><li><a href="public%250DUtility%2520functions%2520for%2520validating%2520request%2520payloads..html">publicUtility functions for validating request payloads.</a></li></ul><h3>Global</h3><ul><li><a href="global.html#changeTrainingDisplay">changeTrainingDisplay</a></li><li><a href="global.html#changeViewsNav">changeViewsNav</a></li><li><a href="global.html#downloadJson">downloadJson</a></li><li><a href="global.html#downloadPkl">downloadPkl</a></li><li><a href="global.html#downloadPklByName">downloadPklByName</a></li><li><a href="global.html#isBetween">isBetween</a></li><li><a href="global.html#isNum">isNum</a></li><li><a href="global.html#isPositiveInteger">isPositiveInteger</a></li><li><a href="global.html#loadChart">loadChart</a></li><li><a href="global.html#loadFile">loadFile</a></li><li><a href="global.html#normalizeValue">normalizeValue</a></li><li><a href="global.html#renderResults">renderResults</a></li><li><a href="global.html#reportValidationErrors">reportValidationErrors</a></li><li><a href="global.html#runValidation">runValidation</a></li><li><a href="global.html#setupRange">setupRange</a></li><li><a href="global.html#showArchitecture">showArchitecture</a></li><li><a href="global.html#showTrainingResultsAndDownload">showTrainingResultsAndDownload</a></li><li><a href="global.html#startSearch">startSearch</a></li><li><a href="global.html#startTraining">startTraining</a></li><li><a href="global.html#strIsEmpty">strIsEmpty</a></li><li><a href="global.html#validateChromosome">validateChromosome</a></li><li><a href="global.html#validateSearchParams">validateSearchParams</a></li><li><a href="global.html#validateTrainingParams">validateTrainingParams</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Nov 04 2025 19:29:10 GMT-0600 (hora estándar central)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -1,19 +1,45 @@
-// Utils
+/**
+ * @module controllers/validationData
+ * @file controllers/validationData.js
+ * Utility functions for validating request payloads.
+ */
 
+/**
+ * Returns true when the received value is an empty string.
+ * @param {string|number|null|undefined} text Value to evaluate.
+ * @returns {boolean}
+ */
 function strIsEmpty(text) {
   return text === ""
 }
 
+/**
+ * Checks if a value can be safely converted to a finite number.
+ * @param {unknown} num Value to validate.
+ * @returns {boolean}
+ */
 function isNum(num) {
   // Acepta números en formato string o number
   return !Number.isNaN(Number(num))
 }
 
+/**
+ * Determines whether the provided value represents a positive integer.
+ * @param {unknown} value Value to validate.
+ * @returns {boolean}
+ */
 function isPositiveInteger(value) {
   const n = Number(value)
   return Number.isInteger(n) && n > 0
 }
 
+/**
+ * Validates that the provided numeric value lies within the inclusive range [min, max].
+ * @param {unknown} value Value to validate.
+ * @param {number} min Minimum accepted value.
+ * @param {number} max Maximum accepted value.
+ * @returns {boolean}
+ */
 function isBetween(value, min, max) {
   const n = Number(value)
   if (Number.isNaN(n) || !Number.isFinite(n)) return false
@@ -22,6 +48,11 @@ function isBetween(value, min, max) {
 
 // validation functions
 
+/**
+ * Checks whether the chromosome payload contains a valid chromosome array.
+ * @param {Object} body Request payload.
+ * @returns {{isValid: boolean, errors: Object|null}}
+ */
 function validateChromosome(body) { 
   const errors = {}
 
@@ -36,8 +67,9 @@ function validateChromosome(body) {
 }
 
 /**
- * Valida que los parámetros del entrenamiento sean correctos
+ * Valida que los parámetros del entrenamiento sean correctos.
  * @param {Object} body {population_size, f, crossover_rate, mutation_rate, generations}
+ * @returns {{isValid: boolean, errors: Object|null, parsed?: Object}}
  */
 function validateSearchParams(body) {
   const errors = {}
@@ -106,8 +138,9 @@ function validateSearchParams(body) {
 }
 
 /**
- * Valida los parámetros de entrenamiento
+ * Valida los parámetros de entrenamiento.
  * @param {Object} body {data_loader, dataset_len, epochs, chromosome}
+ * @returns {{isValid: boolean, errors: Object|null, parsed?: Object}}
  */
 function validateTrainingParams(body) {
   const errors = {}
@@ -168,6 +201,12 @@ function validateTrainingParams(body) {
   return { isValid: true, errors: null, parsed }
 }
 
+/**
+ * Ejecuta una función de validación y valida el formato de su resultado.
+ * @param {Function} validationFunction Función de validación a ejecutar.
+ * @param {Object} payload Datos a validar.
+ * @returns {Promise<{isValid: boolean, errors: Object|null}>}
+ */
 async function runValidation(validationFunction, payload) {
   if (typeof validationFunction !== 'function') {
     throw new TypeError('validationFunction debe ser una función')
@@ -180,6 +219,10 @@ async function runValidation(validationFunction, payload) {
   return validation
 }
 
+/**
+ * Lanza una excepción cuando la validación contiene errores.
+ * @param {{isValid: boolean, errors?: Object}} validation Resultado de la validación.
+ */
 function reportValidationErrors(validation) {
   if (!validation || validation.isValid) return
   throw new Error('Errores de validación: ' + JSON.stringify(validation.errors))

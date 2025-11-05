@@ -1,40 +1,99 @@
-/**
- * @module public/js/validationData
- * @file public/js/validationData.js
- * @namespace public
- * Utility functions for validating request payloads.
- */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: validationData.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: validationData.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>// Utils
 
 /**
- * Verifica si una cadena está vacía
- * @param {string} text
+ * Returns true when the received value is an empty string.
+ * @param {string|number|null|undefined} text Value to evaluate.
  * @returns {boolean}
  */
 function strIsEmpty(text) {
   return text === ""
 }
 
+/**
+ * Checks if a value can be safely converted to a finite number.
+ * @param {unknown} num Value to validate.
+ * @returns {boolean}
+ */
 function isNum(num) {
   // Acepta números en formato string o number
   return !Number.isNaN(Number(num))
 }
 
+/**
+ * Determines whether the provided value represents a positive integer.
+ * @param {unknown} value Value to validate.
+ * @returns {boolean}
+ */
 function isPositiveInteger(value) {
   const n = Number(value)
-  return Number.isInteger(n) && n > 0
+  return Number.isInteger(n) &amp;&amp; n > 0
 }
 
+/**
+ * Validates that the provided numeric value lies within the inclusive range [min, max].
+ * @param {unknown} value Value to validate.
+ * @param {number} min Minimum accepted value.
+ * @param {number} max Maximum accepted value.
+ * @returns {boolean}
+ */
 function isBetween(value, min, max) {
   const n = Number(value)
   if (Number.isNaN(n) || !Number.isFinite(n)) return false
-  return n >= min && n <= max
+  return n >= min &amp;&amp; n &lt;= max
 }
 
-
 // validation functions
+
 /**
- * Valida que los parámetros del entrenamiento sean correctos
+ * Checks whether the chromosome payload contains a valid chromosome array.
+ * @param {Object} body Request payload.
+ * @returns {{isValid: boolean, errors: Object|null}}
+ */
+function validateChromosome(body) { 
+  const errors = {}
+
+  // chromosome -> array u objeto (no se valida más aquí)
+  if (!Array.isArray(body.chromosome)) {
+    errors.chromosome = 'chromosome debe ser un array u objeto válido'
+  }
+  if (Object.keys(errors).length > 0) {
+    return { isValid: false, errors }
+  }
+  return { isValid: true, errors: null }
+}
+
+/**
+ * Valida que los parámetros del entrenamiento sean correctos.
  * @param {Object} body {population_size, f, crossover_rate, mutation_rate, generations}
+ * @returns {{isValid: boolean, errors: Object|null, parsed?: Object}}
  */
 function validateSearchParams(body) {
   const errors = {}
@@ -62,12 +121,12 @@ function validateSearchParams(body) {
 
   // Validaciones por campo
   // population_size -> entero positivo (>=2)
-  if (!isPositiveInteger(body.population_size) || Number(body.population_size) < 2) {
+  if (!isPositiveInteger(body.population_size) || Number(body.population_size) &lt; 2) {
     errors.population_size = 'population_size debe ser un entero >= 2'
   }
 
   // f -> número real > 0 (acepta decimales)
-  if (!isNum(body.f) || Number(body.f) <= 0) {
+  if (!isNum(body.f) || Number(body.f) &lt;= 0) {
     errors.f = 'f debe ser un número > 0'
   }
 
@@ -82,7 +141,7 @@ function validateSearchParams(body) {
   }
 
   // generations -> entero positivo
-  if (!isPositiveInteger(body.generations) || Number(body.generations) < 1) {
+  if (!isPositiveInteger(body.generations) || Number(body.generations) &lt; 1) {
     errors.generations = 'generations debe ser un entero >= 1'
   }
 
@@ -103,8 +162,9 @@ function validateSearchParams(body) {
 }
 
 /**
- * Valida los parámetros de entrenamiento
+ * Valida los parámetros de entrenamiento.
  * @param {Object} body {data_loader, dataset_len, epochs, chromosome}
+ * @returns {{isValid: boolean, errors: Object|null, parsed?: Object}}
  */
 function validateTrainingParams(body) {
   const errors = {}
@@ -166,10 +226,10 @@ function validateTrainingParams(body) {
 }
 
 /**
- * Valida que los datos usando una función de validación dada sean correctos
- * @param {function} validationFunction función de validación
- * @param {Object} payload datos a validar
- * @returns datos validados
+ * Ejecuta una función de validación y valida el formato de su resultado.
+ * @param {Function} validationFunction Función de validación a ejecutar.
+ * @param {Object} payload Datos a validar.
+ * @returns {Promise&lt;{isValid: boolean, errors: Object|null}>}
  */
 async function runValidation(validationFunction, payload) {
   if (typeof validationFunction !== 'function') {
@@ -183,22 +243,42 @@ async function runValidation(validationFunction, payload) {
   return validation
 }
 
-// Función que reporta (separada) — inyectable para tests
-function reportValidationErrors(validation, { title = 'Datos inválidos', okText = 'De acuerdo', reporter = Notiflix.Report.failure } = {}) {
+/**
+ * Lanza una excepción cuando la validación contiene errores.
+ * @param {{isValid: boolean, errors?: Object}} validation Resultado de la validación.
+ */
+function reportValidationErrors(validation) {
   if (!validation || validation.isValid) return
-  const errs = validation.errors
-  const lines = []
-  if (errs && typeof errs === 'object') {
-    for (const [k, v] of Object.entries(errs)) {
-      lines.push(`${k}: ${v}`)
-    }
-  } else if (typeof errs === 'string') {
-    lines.push(errs)
-  } else {
-    lines.push('Errores de validación')
-  }
-  reporter(title, lines.join('\n'), okText)
+  throw new Error('Errores de validación: ' + JSON.stringify(validation.errors))
 }
 
-// Hacer accesible globalmente para usar desde otros scripts
-window.validateSearchParams = validateSearchParams
+// Exportar para que otros controladores (ej. controllers/logic.js) puedan usarlas
+module.exports = {
+  validateChromosome,
+  validateSearchParams,
+  validateTrainingParams,
+  runValidation,
+  reportValidationErrors
+}</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#isBetween">isBetween</a></li><li><a href="global.html#isNum">isNum</a></li><li><a href="global.html#isPositiveInteger">isPositiveInteger</a></li><li><a href="global.html#reportValidationErrors">reportValidationErrors</a></li><li><a href="global.html#runValidation">runValidation</a></li><li><a href="global.html#strIsEmpty">strIsEmpty</a></li><li><a href="global.html#validateChromosome">validateChromosome</a></li><li><a href="global.html#validateSearchParams">validateSearchParams</a></li><li><a href="global.html#validateTrainingParams">validateTrainingParams</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Nov 04 2025 19:17:41 GMT-0600 (hora estándar central)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

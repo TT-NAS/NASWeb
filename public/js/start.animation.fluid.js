@@ -1,3 +1,10 @@
+/**
+ * @module public/js/start.animation.fluid
+ * @file public/js/start.animation.fluid.js
+ * @namespace public
+ * JavaScript para la gestión de animaciones fluidas en la interfaz.
+ */
+
 const { animate: animeAnimate, utils, createDraggable, spring } = anime;
 
 let scheduleLinePosition = () => {};

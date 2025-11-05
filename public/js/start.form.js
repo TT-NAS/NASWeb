@@ -1,3 +1,10 @@
+/**
+ * @module public/js/start.form
+ * @file public/js/start.form.js
+ * @namespace public
+ * JavaScript para la gestión del formulario de inicio y la interacción con la API.
+ */
+
 // Defaults
 // Este script vincula los controles de tipo 'range' del formulario con sus salidas <output>,
 // mostrando dinámicamente el valor seleccionado por el usuario en cada control.

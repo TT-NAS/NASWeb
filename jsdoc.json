@@ -1,0 +1,12 @@
+{
+  "source": {
+    "include": ["./controllers", "./public", "./tests", "./index.js", "./public/js"]
+  },
+  "opts": {
+    "destination": "docs"
+  },
+  "templates": {
+    "cleverLinks": true,
+    "monospaceLinks": false
+  }
+}
