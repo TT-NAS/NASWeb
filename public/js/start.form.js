@@ -17,12 +17,12 @@
 function setupRange(idInput, idOutput) {
   const input = document.getElementById(idInput);
   const output = document.getElementById(idOutput);
-  if (input && output) {
+  if (!input || !output) return;
+
+  output.textContent = input.value;
+  input.addEventListener("input", () => {
     output.textContent = input.value;
-    input.addEventListener("input", () => {
-      output.textContent = input.value;
-    });
-  }
+  });
 }
 
 setupRange("range-population-size", "range-population-size-value");
@@ -440,20 +440,36 @@ async function startTraining() {
  */
 function changeTrainingDisplay(trainingIsActive, toActive) {
   if (toActive === "results" && trainingIsActive) {
-    containerTrainResults.style.display = "block"
-    containerTrainParameters.style.display = "none"
+    if (containerTrainResults) {
+      containerTrainResults.style.display = "block"
+    }
+    if (containerTrainParameters) {
+      containerTrainParameters.style.display = "none"
+    }
 
-    parametersButton.classList.toggle("active")
-    resultsTrainButton.classList.toggle("active")
+    if (parametersButton) {
+      parametersButton.classList.toggle("active")
+    }
+    if (resultsTrainButton) {
+      resultsTrainButton.classList.toggle("active")
+    }
     window.dispatchEvent(new Event('resize'));
 
     trainingPageIsActive = false
   } else if (toActive === "parameters" && !trainingIsActive) {
-    containerTrainResults.style.display = "none"
-    containerTrainParameters.style.display = "block"
+    if (containerTrainResults) {
+      containerTrainResults.style.display = "none"
+    }
+    if (containerTrainParameters) {
+      containerTrainParameters.style.display = "block"
+    }
 
-    parametersButton.classList.toggle("active")
-    resultsTrainButton.classList.toggle("active")
+    if (parametersButton) {
+      parametersButton.classList.toggle("active")
+    }
+    if (resultsTrainButton) {
+      resultsTrainButton.classList.toggle("active")
+    }
     window.dispatchEvent(new Event('resize'));
 
     trainingPageIsActive = true
@@ -466,20 +482,36 @@ function changeTrainingDisplay(trainingIsActive, toActive) {
  */
 function changeViewsNav(animationIsActive, toActive) {
   if (toActive === "animation" && !animationIsActive) {
-    animation.style.display = "flex"
-    canvasChart.style.display = "none"
+    if (animation) {
+      animation.style.display = "flex"
+    }
+    if (canvasChart) {
+      canvasChart.style.display = "none"
+    }
 
-    navButtonArchitecture.classList.toggle("active")
-    navButtonChart.classList.toggle("active")
+    if (navButtonArchitecture) {
+      navButtonArchitecture.classList.toggle("active")
+    }
+    if (navButtonChart) {
+      navButtonChart.classList.toggle("active")
+    }
     window.dispatchEvent(new Event('resize'));
 
     animationPageIsActive = true
   } else if (toActive === "chart" && animationIsActive) {
-    animation.style.display = "none"
-    canvasChart.style.display = "block"
+    if (animation) {
+      animation.style.display = "none"
+    }
+    if (canvasChart) {
+      canvasChart.style.display = "block"
+    }
 
-    navButtonArchitecture.classList.toggle("active")
-    navButtonChart.classList.toggle("active")
+    if (navButtonArchitecture) {
+      navButtonArchitecture.classList.toggle("active")
+    }
+    if (navButtonChart) {
+      navButtonChart.classList.toggle("active")
+    }
     window.dispatchEvent(new Event('resize'));
 
     animationPageIsActive = false
@@ -532,16 +564,36 @@ function loadFile() {
 let animationPageIsActive = true
 let trainingPageIsActive = true
 // Reactions
-start_button.addEventListener("click", () => startSearch())
-downloadJsonButton.addEventListener("click", () => downloadJson())
-trainingButton.addEventListener("click", () => startTraining())
-parametersButton.addEventListener("click", () => changeTrainingDisplay(trainingPageIsActive, "parameters"))
-resultsTrainButton.addEventListener("click", () => changeTrainingDisplay(trainingPageIsActive, "results"))
-buttonLoadArchitecture.addEventListener("click", () => fileChromosoma.click())
-fileChromosoma.addEventListener("change", () => loadFile())
-navButtonArchitecture.addEventListener("click", () => changeViewsNav(animationPageIsActive, "animation"))
-navButtonChart.addEventListener("click", () => changeViewsNav(animationPageIsActive, "chart"))
-downloadPklButton.addEventListener("click", () => downloadPkl())
+if (start_button) {
+  start_button.addEventListener("click", () => startSearch())
+}
+if (downloadJsonButton) {
+  downloadJsonButton.addEventListener("click", () => downloadJson())
+}
+if (trainingButton) {
+  trainingButton.addEventListener("click", () => startTraining())
+}
+if (parametersButton) {
+  parametersButton.addEventListener("click", () => changeTrainingDisplay(trainingPageIsActive, "parameters"))
+}
+if (resultsTrainButton) {
+  resultsTrainButton.addEventListener("click", () => changeTrainingDisplay(trainingPageIsActive, "results"))
+}
+if (buttonLoadArchitecture && fileChromosoma) {
+  buttonLoadArchitecture.addEventListener("click", () => fileChromosoma.click())
+}
+if (fileChromosoma) {
+  fileChromosoma.addEventListener("change", () => loadFile())
+}
+if (navButtonArchitecture) {
+  navButtonArchitecture.addEventListener("click", () => changeViewsNav(animationPageIsActive, "animation"))
+}
+if (navButtonChart) {
+  navButtonChart.addEventListener("click", () => changeViewsNav(animationPageIsActive, "chart"))
+}
+if (downloadPklButton) {
+  downloadPklButton.addEventListener("click", () => downloadPkl())
+}
 
 // Eleva la tarjeta de resultados cuando su dropdown está abierto para evitar que quede oculta.
 document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach((toggle) => {
@@ -561,10 +613,39 @@ document.addEventListener("DOMContentLoaded", () => {
   (() => {
     loadChart();
 
-    containerTrainResults.style.display = "none";
-    canvasChart.style.display = "none";
+    if (containerTrainResults) {
+      containerTrainResults.style.display = "none";
+    }
+    if (canvasChart) {
+      canvasChart.style.display = "none";
+    }
 
     // Resize
     window.dispatchEvent(new Event('resize'));
   })();
 });
+
+const startFormExports = {
+  setupRange,
+  normalizeValue,
+  renderResults,
+  loadChart,
+  showArchitecture,
+  startSearch,
+  downloadJson,
+  downloadPkl,
+  downloadPklByName,
+  showTrainingResultsAndDownload,
+  startTraining,
+  changeTrainingDisplay,
+  changeViewsNav,
+  loadFile
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = startFormExports
+}
+
+if (typeof window !== 'undefined') {
+  window.startForm = startFormExports
+}

@@ -16,7 +16,7 @@ function strIsEmpty(text) {
 
 function isNum(num) {
   // Acepta números en formato string o number
-  return !Number.isNaN(Number(num))
+  return num !== "" && !Number.isNaN(Number(num));
 }
 
 function isPositiveInteger(value) {
@@ -201,4 +201,25 @@ function reportValidationErrors(validation, { title = 'Datos inválidos', okText
 }
 
 // Hacer accesible globalmente para usar desde otros scripts
-window.validateSearchParams = validateSearchParams
+if (typeof window !== 'undefined') {
+  window.validateSearchParams = validateSearchParams
+}
+
+const validationUtils = {
+  strIsEmpty,
+  isNum,
+  isPositiveInteger,
+  isBetween,
+  validateSearchParams,
+  validateTrainingParams,
+  runValidation,
+  reportValidationErrors
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = validationUtils
+}
+
+if (typeof window !== 'undefined') {
+  window.startValidation = validationUtils
+}
