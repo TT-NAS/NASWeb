@@ -45,12 +45,12 @@
 function setupRange(idInput, idOutput) {
   const input = document.getElementById(idInput);
   const output = document.getElementById(idOutput);
-  if (input &amp;&amp; output) {
+  if (!input || !output) return;
+
+  output.textContent = input.value;
+  input.addEventListener("input", () => {
     output.textContent = input.value;
-    input.addEventListener("input", () => {
-      output.textContent = input.value;
-    });
-  }
+  });
 }
 
 setupRange("range-population-size", "range-population-size-value");
@@ -468,20 +468,36 @@ async function startTraining() {
  */
 function changeTrainingDisplay(trainingIsActive, toActive) {
   if (toActive === "results" &amp;&amp; trainingIsActive) {
-    containerTrainResults.style.display = "block"
-    containerTrainParameters.style.display = "none"
+    if (containerTrainResults) {
+      containerTrainResults.style.display = "block"
+    }
+    if (containerTrainParameters) {
+      containerTrainParameters.style.display = "none"
+    }
 
-    parametersButton.classList.toggle("active")
-    resultsTrainButton.classList.toggle("active")
+    if (parametersButton) {
+      parametersButton.classList.toggle("active")
+    }
+    if (resultsTrainButton) {
+      resultsTrainButton.classList.toggle("active")
+    }
     window.dispatchEvent(new Event('resize'));
 
     trainingPageIsActive = false
   } else if (toActive === "parameters" &amp;&amp; !trainingIsActive) {
-    containerTrainResults.style.display = "none"
-    containerTrainParameters.style.display = "block"
+    if (containerTrainResults) {
+      containerTrainResults.style.display = "none"
+    }
+    if (containerTrainParameters) {
+      containerTrainParameters.style.display = "block"
+    }
 
-    parametersButton.classList.toggle("active")
-    resultsTrainButton.classList.toggle("active")
+    if (parametersButton) {
+      parametersButton.classList.toggle("active")
+    }
+    if (resultsTrainButton) {
+      resultsTrainButton.classList.toggle("active")
+    }
     window.dispatchEvent(new Event('resize'));
 
     trainingPageIsActive = true
@@ -494,20 +510,36 @@ function changeTrainingDisplay(trainingIsActive, toActive) {
  */
 function changeViewsNav(animationIsActive, toActive) {
   if (toActive === "animation" &amp;&amp; !animationIsActive) {
-    animation.style.display = "flex"
-    canvasChart.style.display = "none"
+    if (animation) {
+      animation.style.display = "flex"
+    }
+    if (canvasChart) {
+      canvasChart.style.display = "none"
+    }
 
-    navButtonArchitecture.classList.toggle("active")
-    navButtonChart.classList.toggle("active")
+    if (navButtonArchitecture) {
+      navButtonArchitecture.classList.toggle("active")
+    }
+    if (navButtonChart) {
+      navButtonChart.classList.toggle("active")
+    }
     window.dispatchEvent(new Event('resize'));
 
     animationPageIsActive = true
   } else if (toActive === "chart" &amp;&amp; animationIsActive) {
-    animation.style.display = "none"
-    canvasChart.style.display = "block"
+    if (animation) {
+      animation.style.display = "none"
+    }
+    if (canvasChart) {
+      canvasChart.style.display = "block"
+    }
 
-    navButtonArchitecture.classList.toggle("active")
-    navButtonChart.classList.toggle("active")
+    if (navButtonArchitecture) {
+      navButtonArchitecture.classList.toggle("active")
+    }
+    if (navButtonChart) {
+      navButtonChart.classList.toggle("active")
+    }
     window.dispatchEvent(new Event('resize'));
 
     animationPageIsActive = false
@@ -560,16 +592,36 @@ function loadFile() {
 let animationPageIsActive = true
 let trainingPageIsActive = true
 // Reactions
-start_button.addEventListener("click", () => startSearch())
-downloadJsonButton.addEventListener("click", () => downloadJson())
-trainingButton.addEventListener("click", () => startTraining())
-parametersButton.addEventListener("click", () => changeTrainingDisplay(trainingPageIsActive, "parameters"))
-resultsTrainButton.addEventListener("click", () => changeTrainingDisplay(trainingPageIsActive, "results"))
-buttonLoadArchitecture.addEventListener("click", () => fileChromosoma.click())
-fileChromosoma.addEventListener("change", () => loadFile())
-navButtonArchitecture.addEventListener("click", () => changeViewsNav(animationPageIsActive, "animation"))
-navButtonChart.addEventListener("click", () => changeViewsNav(animationPageIsActive, "chart"))
-downloadPklButton.addEventListener("click", () => downloadPkl())
+if (start_button) {
+  start_button.addEventListener("click", () => startSearch())
+}
+if (downloadJsonButton) {
+  downloadJsonButton.addEventListener("click", () => downloadJson())
+}
+if (trainingButton) {
+  trainingButton.addEventListener("click", () => startTraining())
+}
+if (parametersButton) {
+  parametersButton.addEventListener("click", () => changeTrainingDisplay(trainingPageIsActive, "parameters"))
+}
+if (resultsTrainButton) {
+  resultsTrainButton.addEventListener("click", () => changeTrainingDisplay(trainingPageIsActive, "results"))
+}
+if (buttonLoadArchitecture &amp;&amp; fileChromosoma) {
+  buttonLoadArchitecture.addEventListener("click", () => fileChromosoma.click())
+}
+if (fileChromosoma) {
+  fileChromosoma.addEventListener("change", () => loadFile())
+}
+if (navButtonArchitecture) {
+  navButtonArchitecture.addEventListener("click", () => changeViewsNav(animationPageIsActive, "animation"))
+}
+if (navButtonChart) {
+  navButtonChart.addEventListener("click", () => changeViewsNav(animationPageIsActive, "chart"))
+}
+if (downloadPklButton) {
+  downloadPklButton.addEventListener("click", () => downloadPkl())
+}
 
 // Eleva la tarjeta de resultados cuando su dropdown está abierto para evitar que quede oculta.
 document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach((toggle) => {
@@ -589,13 +641,42 @@ document.addEventListener("DOMContentLoaded", () => {
   (() => {
     loadChart();
 
-    containerTrainResults.style.display = "none";
-    canvasChart.style.display = "none";
+    if (containerTrainResults) {
+      containerTrainResults.style.display = "none";
+    }
+    if (canvasChart) {
+      canvasChart.style.display = "none";
+    }
 
     // Resize
     window.dispatchEvent(new Event('resize'));
   })();
-});</code></pre>
+});
+
+const startFormExports = {
+  setupRange,
+  normalizeValue,
+  renderResults,
+  loadChart,
+  showArchitecture,
+  startSearch,
+  downloadJson,
+  downloadPkl,
+  downloadPklByName,
+  showTrainingResultsAndDownload,
+  startTraining,
+  changeTrainingDisplay,
+  changeViewsNav,
+  loadFile
+}
+
+if (typeof module !== 'undefined' &amp;&amp; module.exports) {
+  module.exports = startFormExports
+}
+
+if (typeof window !== 'undefined') {
+  window.startForm = startFormExports
+}</code></pre>
         </article>
     </section>
 
@@ -611,7 +692,7 @@ document.addEventListener("DOMContentLoaded", () => {
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Nov 04 2025 19:29:10 GMT-0600 (hora estándar central)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Wed Nov 05 2025 10:30:44 GMT-0600 (hora estándar central)
 </footer>
 
 <script> prettyPrint(); </script>
