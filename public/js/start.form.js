@@ -57,6 +57,41 @@ const animation = document.getElementById("animation")
 const navButtonArchitecture = document.getElementById("navbutton-architecture")
 const navButtonChart = document.getElementById("navbutton-chart")
 
+const elevateNProgressBar = () => {
+  const nprogressRoot = document.getElementById("nprogress")
+  if (!nprogressRoot) return
+
+  nprogressRoot.style.position = "fixed"
+  nprogressRoot.style.top = "0"
+  nprogressRoot.style.left = "0"
+  nprogressRoot.style.width = "100%"
+  nprogressRoot.style.zIndex = "1000001"
+  nprogressRoot.style.pointerEvents = "none"
+
+  const bar = nprogressRoot.querySelector(".bar")
+  if (bar) {
+    bar.style.height = "4px"
+    bar.style.background = "#773ec7"
+    bar.style.boxShadow = "0 0 12px rgba(119, 62, 199, 0.6)"
+  }
+
+  const peg = nprogressRoot.querySelector(".peg")
+  if (peg) {
+    peg.style.boxShadow = "0 0 10px #773ec7, 0 0 5px #773ec7"
+  }
+}
+
+const scheduleNProgressBarElevation = () => {
+  const scheduler = typeof requestAnimationFrame === "function"
+    ? requestAnimationFrame
+    : (fn) => setTimeout(fn, 0)
+
+  scheduler(() => {
+    elevateNProgressBar()
+    setTimeout(elevateNProgressBar, 50)
+  })
+}
+
 //Functions 
 
 /**
@@ -201,6 +236,16 @@ const startSearch = async () => {
 
   let resultsProcessed = false
   let latestPayload = null
+  let searchProgressActive = false
+  const totalGenerations = Number.isFinite(generations) && generations > 0 ? generations : null
+  let lastReportedGeneration = 0
+
+  if (typeof NProgress?.start === "function") {
+    NProgress.start()
+    NProgress.set(0)
+    searchProgressActive = true
+    scheduleNProgressBarElevation()
+  }
 
   const processResults = (results, message) => {
     if (!results || resultsProcessed) return
@@ -229,6 +274,11 @@ const startSearch = async () => {
       showArchitecture()
     }
 
+    if (searchProgressActive && typeof NProgress?.done === "function") {
+      NProgress.done()
+      searchProgressActive = false
+    }
+
     resultsProcessed = true
   }
 
@@ -241,8 +291,29 @@ const startSearch = async () => {
       partialResults.predicted_iou = entry.best_fitness
     }
 
-    if (entry.generation !== undefined && entry.generation !== null) {
+    const hasGeneration = entry.generation !== undefined && entry.generation !== null
+    if (hasGeneration) {
       partialResults.stop_gen = entry.generation
+    }
+
+    if (typeof entry.generation === "number" && Number.isFinite(entry.generation)) {
+      const currentGen = entry.generation
+      if (currentGen !== lastReportedGeneration) {
+        lastReportedGeneration = currentGen
+
+        if (searchProgressActive && typeof NProgress?.set === "function") {
+          const denominator = totalGenerations ?? Math.max(currentGen, 1)
+          const normalized = Math.max(0, Math.min(1, currentGen / denominator))
+          NProgress.set(normalized)
+        }
+
+        if (typeof Notiflix?.Loading?.change === "function") {
+          const suffix = totalGenerations
+            ? ` (${currentGen}/${totalGenerations})`
+            : ` (${currentGen})`
+          Notiflix.Loading.change(`Buscando la mejor arquitectura...${suffix}`)
+        }
+      }
     }
 
     if (Object.keys(partialResults).length === 0) return
@@ -352,8 +423,16 @@ const startSearch = async () => {
       "De acuerdo"
     )
     renderResults()
+    if (searchProgressActive && typeof NProgress?.done === "function") {
+      NProgress.done()
+      searchProgressActive = false
+    }
   } finally {
     Notiflix.Loading.remove();
+    if (searchProgressActive && typeof NProgress?.done === "function") {
+      NProgress.done()
+      searchProgressActive = false
+    }
   }
 }
 
@@ -462,6 +541,36 @@ async function downloadPklByName(name) {
 }
 
 
+const extractLatestValue = (value) => {
+  if (Array.isArray(value)) {
+    return value.length > 0 ? value[value.length - 1] : undefined
+  }
+  return value
+}
+
+function updateTrainingMetrics(progress = {}) {
+  const iouTrainEl = document.getElementById("result-train-iou")
+  const iouValEl = document.getElementById("result-train-iou_val")
+  const timeEl = document.getElementById("result-train-time")
+  const epochEl = document.getElementById("result-train-epoch")
+
+  const latestTrain = extractLatestValue(progress.training_iou)
+  const latestVal = extractLatestValue(progress.validation_iou)
+
+  if (iouTrainEl) {
+    iouTrainEl.textContent = normalizeValue(latestTrain, { decimals: 4 })
+  }
+  if (iouValEl) {
+    iouValEl.textContent = normalizeValue(latestVal, { decimals: 4 })
+  }
+  if (timeEl) {
+    timeEl.textContent = normalizeValue(progress.training_time, { decimals: 2 })
+  }
+  if (epochEl) {
+    epochEl.textContent = normalizeValue(progress.last_epoch)
+  }
+}
+
 /**
  * Muestra los resultados del entrenamiento en contenedor
  * @param {Object} results Resultados del entrenamiento de la arquitectura
@@ -488,45 +597,182 @@ function showTrainingResultsAndDownload(results, pkl_url) {
  * Inicia el entrenamiento de la arquitectura en la sessión
  */
 async function startTraining() {
-  // toma los valores de los input
   const data_loader = document.getElementById("select-dataset").value
   const dataset_len = document.getElementById("number-dataset-size").value
   const epochs = document.getElementById("number-epochs").value
-  const chromosome = JSON.parse(sessionStorage.getItem("best_chromosome")).real_codification
-  // Muestra el cargando
-  Notiflix.Loading.dots("Entrenando la arquitectura arquitectura...");
-  // Valida los parámetros antes de enviar
+  const storedChromosome = sessionStorage.getItem("best_chromosome")
+  const chromosome = storedChromosome ? JSON.parse(storedChromosome).real_codification : null
+
+  if (!chromosome) {
+    Notiflix.Report.warning(
+      "Cromosoma no encontrado",
+      "Debes ejecutar primero la búsqueda o cargar una arquitectura antes de entrenar.",
+      "Entendido"
+    )
+    return
+  }
+
+  Notiflix.Loading.dots("Entrenando la arquitectura...")
+  if (typeof NProgress?.start === "function") {
+    NProgress.start()
+    NProgress.set(0)
+    scheduleNProgressBarElevation()
+  }
+
   const body = {
     data_loader,
     dataset_len,
     epochs,
     chromosome
   }
+
   const validation = await runValidation(validateTrainingParams, body)
   if (!validation.isValid) {
-    Notiflix.Loading.remove();
+    Notiflix.Loading.remove()
     return reportValidationErrors(validation)
   }
-  // Envía la petición al servidor
+
+  let latestProgress = null
+  let resultsViewShown = false
+  let totalEpochs = Number(epochs)
+  let lastReportedEpoch = 0
+
+  const ensureResultsView = () => {
+    if (resultsViewShown) return
+    try {
+      changeTrainingDisplay(trainingPageIsActive, "results")
+    } catch (_) {
+      if (resultsTrainButton && !resultsTrainButton.classList.contains("active")) {
+        resultsTrainButton.click()
+      }
+    }
+    resultsViewShown = true
+  }
+
+  const handleProgressPayload = (payload) => {
+    if (!payload || typeof payload !== "object") return
+    if (payload.error) {
+      throw new Error(payload.error)
+    }
+
+    latestProgress = payload
+    ensureResultsView()
+    updateTrainingMetrics(payload)
+
+    if (typeof payload.last_epoch === "number" && Notiflix?.Loading?.change) {
+      Notiflix.Loading.change(`Entrenando la arquitectura... (época ${payload.last_epoch})`)
+      const current = Number(payload.last_epoch) || 0
+      if (current !== lastReportedEpoch) {
+        lastReportedEpoch = current
+        const denominator = Number.isFinite(totalEpochs) && totalEpochs > 0 ? totalEpochs : current || 1
+        const normalized = Math.max(0, Math.min(1, current / denominator))
+        if (typeof NProgress?.set === "function") {
+          NProgress.set(normalized)
+        }
+      }
+    } else if (payload.training_time && Notiflix?.Loading?.change) {
+      Notiflix.Loading.change(
+        `Entrenando la arquitectura... (${normalizeValue(payload.training_time, { decimals: 2 })} s)`
+      )
+    }
+  }
+
+  const processSSEChunk = (chunk, flush = false, emit) => {
+    if (!chunk && !flush) return ""
+    let buffer = (chunk || "").replace(/\r\n/g, "\n")
+    let delimiterIndex = buffer.indexOf("\n\n")
+
+    while (delimiterIndex !== -1) {
+      const rawEvent = buffer.slice(0, delimiterIndex)
+      buffer = buffer.slice(delimiterIndex + 2)
+      emit(rawEvent)
+      delimiterIndex = buffer.indexOf("\n\n")
+    }
+
+    if (flush && buffer.trim()) {
+      emit(buffer.trim())
+      return ""
+    }
+
+    return buffer
+  }
+
+  const handleRawEvent = (rawEvent) => {
+    const dataLines = []
+    for (const line of rawEvent.split("\n")) {
+      if (line.startsWith("data:")) {
+        dataLines.push(line.slice(5).trim())
+      }
+    }
+    if (!dataLines.length) return
+    const payloadText = dataLines.join("\n")
+    try {
+      const parsed = JSON.parse(payloadText)
+      handleProgressPayload(parsed)
+    } catch (err) {
+      console.error("No se pudo analizar el evento de entrenamiento:", payloadText, err)
+    }
+  }
+
   try {
-    // Envía la petición al servidor
     const res = await fetch("/api/train", {
       method: "post",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        data_loader,
-        dataset_len,
-        epochs,
-        chromosome
-      })
+      body: JSON.stringify(body)
     })
+
     if (!res.ok) {
-      throw new Error(`Solicitud fallida con código ${res.status}`)
+      const fallbackText = await res.text().catch(() => "")
+      throw new Error(
+        `Solicitud fallida con código ${res.status}${fallbackText ? ` - ${fallbackText}` : ""}`
+      )
     }
-    const results = await res.json()
-    // muestra los resultados
-    showTrainingResultsAndDownload(results.register, results.pickle_url)
-    console.log(results)
+
+    const reader = res.body && res.body.getReader ? res.body.getReader() : null
+
+    if (!reader) {
+      const results = await res.json()
+      ensureResultsView()
+      showTrainingResultsAndDownload(results.register, results.pickle_url)
+      Notiflix.Notify.success("Entrenamiento completado")
+      return
+    }
+
+    const decoder = new TextDecoder("utf-8")
+    let buffer = ""
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      if (!value) continue
+
+      buffer += decoder.decode(value, { stream: true })
+      buffer = processSSEChunk(buffer, false, handleRawEvent)
+    }
+
+    buffer += decoder.decode()
+    buffer = processSSEChunk(buffer, true, handleRawEvent)
+
+    if (latestProgress) {
+      ensureResultsView()
+      const finalRegister = {
+        training_iou: extractLatestValue(latestProgress.training_iou),
+        validation_iou: extractLatestValue(latestProgress.validation_iou),
+        training_time: latestProgress.training_time,
+        last_epoch: latestProgress.last_epoch
+      }
+      if (latestProgress.pickle_url) {
+        showTrainingResultsAndDownload(finalRegister, latestProgress.pickle_url)
+      } else {
+        updateTrainingMetrics(finalRegister)
+      }
+      Notiflix.Notify.success("Entrenamiento completado")
+      if (typeof NProgress?.done === "function") {
+        NProgress.done()
+      }
+    } else {
+      Notiflix.Notify.info("Entrenamiento completado")
+    }
   } catch (e) {
     console.error(e)
     Notiflix.Report.failure(
@@ -535,7 +781,10 @@ async function startTraining() {
       "De acuerdo"
     )
   } finally {
-    Notiflix.Loading.remove();
+    Notiflix.Loading.remove()
+    if (typeof NProgress?.done === "function") {
+      NProgress.done()
+    }
   }
 }
 

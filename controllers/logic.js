@@ -111,21 +111,62 @@ actions.api_train = async (req, res) => {
       return res.status(400).json({ error: 'Validation failed', details: validation.errors })
     }
 
-    const response = await fetch(
-      `${API_URL}/train`,
-      {
-        method: "post",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      }
-    )
+    const response = await fetch(`${API_URL}/train`, {
+      method: "post",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    })
+
     if (!response.ok) {
-      throw new Error(`Solicitud fallida con código ${response.status}`)
+      const fallback = await response.text().catch(() => "")
+      throw new Error(`Solicitud fallida con código ${response.status}${fallback ? ` - ${fallback}` : ""}`)
     }
-    const results = await response.json()
-    return res.json(results)
+
+    res.status(200)
+    res.setHeader("Content-Type", "text/event-stream; charset=utf-8")
+    res.setHeader("Cache-Control", "no-cache")
+    res.setHeader("Connection", "keep-alive")
+    res.setHeader("Transfer-Encoding", "chunked")
+    if (typeof res.flushHeaders === "function") {
+      res.flushHeaders()
+    }
+
+    const reader = response.body && response.body.getReader ? response.body.getReader() : null
+
+    if (!reader) {
+      const fallback = await response.text().catch(() => "")
+      if (fallback) {
+        res.write(fallback)
+      }
+      return res.end()
+    }
+
+    const decoder = new TextDecoder("utf-8")
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      if (!value) continue
+
+      const chunk = decoder.decode(value, { stream: true })
+      if (chunk) {
+        res.write(chunk)
+      }
+    }
+
+    const finalChunk = decoder.decode()
+    if (finalChunk) {
+      res.write(finalChunk)
+    }
+
+    return res.end()
   } catch (e) {
     console.error("Error al intentar entrenar la arquitectura\n", e)
+    if (res.headersSent && !res.writableEnded) {
+      res.write(`data: ${JSON.stringify({ error: "Error al intentar entrenar la arquitectura" })}\n\n`)
+      return res.end()
+    }
     return res.status(500).json({error: "Error al intentar entrenar la arquitectura"})
   }
 }
