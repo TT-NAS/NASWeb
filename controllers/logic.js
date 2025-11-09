@@ -36,10 +36,63 @@ actions.api_search = async (req, res) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)
     })
-    const data = await response.json()
-    return res.json(data)
+
+    if (!response.ok) {
+      throw new Error(`Solicitud fallida con código ${response.status}`)
+    }
+
+    // Configurar la respuesta como stream hacia el front
+    res.status(200)
+    res.setHeader("Content-Type", "application/json; charset=utf-8")
+    res.setHeader("Transfer-Encoding", "chunked")
+
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder("utf-8")
+    let buffer = ""
+
+    // Leer el stream de datos del API y reenviarlo al front en tiempo real
+    while (true) {
+      const { done, value } = await reader.read()
+      
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true })
+
+      // Procesar líneas completas
+      let lines = buffer.split("\n")
+      buffer = lines.pop() || "" // Guardar la última línea incompleta
+      for (const line of lines) {
+        if (!line.trim()) continue; // Saltar líneas vacías
+        try {
+          const obj = JSON.parse(line)
+          console.log("Datos recibidos del API:", obj)
+          res.write(`${JSON.stringify(obj)}\n`)
+        } catch (err) {
+          console.error("Error al procesar la línea del API:", line, err)
+          res.write(`${line}\n`)
+        }
+      }
+    }
+
+    if (buffer.trim()) {
+      try {
+        const remaining = JSON.parse(buffer)
+        console.log("Datos recibidos del API:", remaining)
+        res.write(`${JSON.stringify(remaining)}\n`)
+      } catch (err) {
+        console.error("Error al procesar la línea final del API:", buffer, err)
+        res.write(`${buffer}\n`)
+      }
+    }
+    console.log("Transmisión completada del API.")
+
+    return res.end()
   } catch(e) {
     console.error("Error al intentar iniciar la búsqueda\n", e)
+    if (res.headersSent && !res.writableEnded) {
+      res.write(`${JSON.stringify({ error: "Error al intentar iniciar la búsqueda" })}\n`)
+      return res.end()
+    }
     return res.status(500).json({error: "Error al intentar iniciar la búsqueda"})
   }
 }

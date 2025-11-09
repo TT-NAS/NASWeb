@@ -81,40 +81,25 @@ const normalizeValue = (value, { decimals } = {}) => {
  * Soporta respuestas anidadas dentro de las propiedades `metrics` o `result`.
  * @param {Object} [payload={}] - Datos retornados por la API.
  */
-const renderResults = (payload = {}) => {
+const renderResults = (payload = {}, { preserveExisting = false } = {}) => {
+  const source = payload?.results ?? payload ?? {}
   const metrics = {
-    iou:
-      payload?.results?.predicted_iou ??
-      payload?.iou ??
-      payload?.metrics?.iou ??
-      payload?.result?.iou,
-    search_time:
-      payload?.results?.search_time ??
-      payload?.search_time ??
-      payload?.metrics?.search_time ??
-      payload?.result?.search_time,
-    generation:
-      payload?.results?.stop_gen ??
-      payload?.generation ??
-      payload?.metrics?.generation ??
-      payload?.result?.generation,
-    stop_reason:
-      payload?.results?.stop_reason ??
-      payload?.stop_reason ??
-      payload?.metrics?.stop_reason ??
-      payload?.result?.stop_reason
+    iou: source?.predicted_iou ?? source?.iou,
+    search_time: source?.search_time,
+    generation: source?.stop_gen ?? source?.generation,
+    stop_reason: source?.stop_reason
   }
 
-  if (resultIou) {
+  if (resultIou && (!preserveExisting || metrics.iou !== undefined)) {
     resultIou.textContent = normalizeValue(metrics.iou, { decimals: 4 })
   }
-  if (resultSearchTime) {
+  if (resultSearchTime && (!preserveExisting || metrics.search_time !== undefined)) {
     resultSearchTime.textContent = normalizeValue(metrics.search_time, { decimals: 2 })
   }
-  if (resultGeneration) {
+  if (resultGeneration && (!preserveExisting || metrics.generation !== undefined)) {
     resultGeneration.textContent = normalizeValue(metrics.generation)
   }
-  if (resultStopReason) {
+  if (resultStopReason && (!preserveExisting || metrics.stop_reason !== undefined)) {
     resultStopReason.textContent = normalizeValue(metrics.stop_reason)
   }
 }
@@ -184,7 +169,6 @@ async function showArchitecture() {
 }
 
 /**
- * Recoge los parámetros del formulario, inicia la búsqueda en el backend y actualiza los resultados mostrados.
  * Gestiona estados de carga y errores para ofrecer retroalimentación al usuario.
  */
 const startSearch = async () => {
@@ -196,13 +180,13 @@ const startSearch = async () => {
   const generations = Number(document.getElementById("range-generations").value.trim());
 
   const body = {
-    population_size: population_size,
-    f: f,
-    crossover_rate: crossover_rate,
-    mutation_rate: mutation_rate,
-    generations: generations
+    population_size,
+    f,
+    crossover_rate,
+    mutation_rate,
+    generations
   }
-  console.log(body);
+  //console.log(body);
   // Validar parámetros antes de enviar
   const validation = await runValidation(validateSearchParams, body)
   if (!validation.isValid) return reportValidationErrors(validation)
@@ -212,6 +196,81 @@ const startSearch = async () => {
   window.scrollTo({ top: 0, behavior: "smooth" });
   // Muestra el cambio de arquitecturas
   startLoop()
+  if (downloadButton) downloadButton.disabled = true
+  if (trainingButton) trainingButton.disabled = true
+
+  let resultsProcessed = false
+  let latestPayload = null
+
+  const processResults = (results, message) => {
+    if (!results || resultsProcessed) return
+
+    renderResults({ results })
+    console.log("Resultado final de /api/search:", results)
+
+    if (navButtonChart) {
+      navButtonChart.click()
+    }
+    if (Array.isArray(results.vector) && results.vector.length > 0) {
+      loadChart(results.vector)
+    }
+
+    sessionStorage.setItem("best_chromosome", JSON.stringify(results, null, 2))
+
+    if (downloadButton) downloadButton.disabled = false
+    if (trainingButton) trainingButton.disabled = false
+
+    if (message) {
+      Notiflix.Notify.success(message)
+    }
+
+    stopLoop()
+    if (results.real_codification) {
+      showArchitecture()
+    }
+
+    resultsProcessed = true
+  }
+
+  const handleProgress = (entry) => {
+    if (resultsProcessed) return
+
+    const partialResults = {}
+
+    if (typeof entry.best_fitness === "number" && Number.isFinite(entry.best_fitness)) {
+      partialResults.predicted_iou = entry.best_fitness
+    }
+
+    if (entry.generation !== undefined && entry.generation !== null) {
+      partialResults.stop_gen = entry.generation
+    }
+
+    if (Object.keys(partialResults).length === 0) return
+
+    renderResults({ results: partialResults }, { preserveExisting: true })
+  }
+
+  const coerceJSONValue = (value) => {
+    let current = value
+    let guard = 0
+
+    while (typeof current === "string" && guard < 3) {
+      const trimmed = current.trim()
+      if (!trimmed) break
+      const first = trimmed[0]
+      if (first !== "{" && first !== "[" && first !== '"') break
+      try {
+        current = JSON.parse(trimmed)
+      } catch (err) {
+        console.warn("No se pudo analizar el chunk del stream como JSON:", trimmed, err)
+        break
+      }
+      guard += 1
+    }
+
+    return current
+  }
+
   try {
     // Envía los valores al back
     const response = await fetch(`/api/search`, {
@@ -222,22 +281,68 @@ const startSearch = async () => {
     if (!response.ok) {
       throw new Error(`Solicitud fallida con código ${response.status}`)
     }
-    const data = await response.json();
-    // Muestra los resultados
-    renderResults(data)
-    console.log(data);
-    // Muestra la gráfica
-    navButtonChart.click()
-    loadChart(data.results.vector)
-    // Guarda el cromosoma en la sesión
-    sessionStorage.setItem("best_chromosome", JSON.stringify(data.results, null, 2))
-    // activa la descarga y el entrenamiento
-    downloadButton.disabled = false
-    trainingButton.disabled = false
-    // Detiene la animación de arquitecturas
-    stopLoop()
-    // Muestra la arquitectura
-    showArchitecture()
+
+    const reader = response.body && response.body.getReader ? response.body.getReader() : null
+
+    const handleEntry = (entry) => {
+      const normalized = coerceJSONValue(entry)
+      if (!normalized || typeof normalized !== "object") return
+
+      latestPayload = normalized
+
+      if (normalized.type === "result" && normalized.results) {
+        processResults(normalized.results, normalized.message)
+      } else if (normalized.type === "progress") {
+        console.log("Stream progreso /api/search:", normalized)
+        handleProgress(normalized)
+      } else if (normalized.message) {
+        console.log("Stream mensaje /api/search:", normalized.message)
+      }
+    }
+
+    if (!reader) {
+      const data = await response.json()
+      handleEntry(data)
+    } else {
+      const decoder = new TextDecoder("utf-8")
+      let buffer = ""
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+
+        const lines = buffer.split("\n")
+        buffer = lines.pop() || ""
+
+        for (const line of lines) {
+          const trimmed = line.trim()
+          if (!trimmed) continue
+
+          const parsed = coerceJSONValue(trimmed)
+          if (!parsed || typeof parsed !== "object") {
+            console.error("Error al procesar el chunk del stream:", line)
+            continue
+          }
+
+          handleEntry(parsed)
+        }
+      }
+
+      if (buffer.trim()) {
+        const parsed = coerceJSONValue(buffer)
+        if (!parsed || typeof parsed !== "object") {
+          console.error("Error al procesar el último chunk del stream:", buffer)
+        } else {
+          handleEntry(parsed)
+        }
+      }
+    }
+
+    if (!resultsProcessed) {
+      stopLoop()
+    }
   } catch (e) {
     console.error(e)
     stopLoop()
