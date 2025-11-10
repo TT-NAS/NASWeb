@@ -71,6 +71,11 @@ function validateSearchParams(body) {
     errors.f = 'f debe ser un número > 0'
   }
 
+  // f -> [0,1]
+  if (!isBetween(body.f, 0, 1)) {
+    errors.f = 'f debe estar entre 0 y 1'
+  }
+
   // crossover_rate -> [0,1]
   if (!isBetween(body.crossover_rate, 0, 1)) {
     errors.crossover_rate = 'crossover_rate debe estar entre 0 y 1'
