@@ -92,6 +92,76 @@ const scheduleNProgressBarElevation = () => {
   })
 }
 
+let lastTrainingImageObjectUrl = null
+
+const downloadAndShowImage = async (imageUrl, imgElement) => {
+  if (!imgElement) return
+  const container = imgElement.closest("[data-trained-image-container]")
+
+  const hideImage = () => {
+    if (container) {
+      container.classList.remove("image-visible")
+      container.classList.add("image-hidden")
+    }
+    if (!imgElement.classList.contains("d-none")) {
+      imgElement.classList.add("d-none")
+    }
+    imgElement.removeAttribute("src")
+  }
+
+  if (!imageUrl) {
+    if (lastTrainingImageObjectUrl) {
+      URL.revokeObjectURL(lastTrainingImageObjectUrl)
+      lastTrainingImageObjectUrl = null
+    }
+    hideImage()
+    return
+  }
+
+  try {
+    const endpoint = `/api/download/image?url=${imageUrl}`
+    const response = await fetch(endpoint)
+
+    if (!response.ok) {
+      throw new Error(`Solicitud fallida con código ${response.status}`)
+    }
+
+    const blob = await response.blob()
+
+    if (lastTrainingImageObjectUrl) {
+      URL.revokeObjectURL(lastTrainingImageObjectUrl)
+      lastTrainingImageObjectUrl = null
+    }
+
+    const objectUrl = URL.createObjectURL(blob)
+    lastTrainingImageObjectUrl = objectUrl
+
+    imgElement.src = objectUrl
+    imgElement.alt = "Segmentación entrenada"
+    imgElement.classList.remove("d-none")
+    if (container) {
+      container.classList.add("image-visible")
+      container.classList.remove("image-hidden")
+    }
+  } catch (error) {
+    console.error("No se pudo descargar la imagen del entrenamiento", error)
+    if (typeof Notiflix?.Notify?.warning === "function") {
+      Notiflix.Notify.warning("No se pudo cargar la imagen del entrenamiento")
+    }
+    if (lastTrainingImageObjectUrl) {
+      URL.revokeObjectURL(lastTrainingImageObjectUrl)
+      lastTrainingImageObjectUrl = null
+    }
+    hideImage()
+  }
+  // Redimensiona el fondo si es necesario
+  if (typeof requestAnimationFrame === "function") {
+    requestAnimationFrame(() => window.dispatchEvent(new Event("resize")))
+  } else {
+    window.dispatchEvent(new Event("resize"))
+  }
+}
+
 //Functions 
 
 /**
@@ -575,12 +645,14 @@ function updateTrainingMetrics(progress = {}) {
  * Muestra los resultados del entrenamiento en contenedor
  * @param {Object} results Resultados del entrenamiento de la arquitectura
  * @param {String} pkl_url URL de descarga del documento pkl
+ * @param {String} image_url URL de descarga de la imagen de la segmentación entrenada
  */
-function showTrainingResultsAndDownload(results, pkl_url) {
+function showTrainingResultsAndDownload(results, pkl_url, image_url) {
   const iou_train = document.getElementById("result-train-iou")
   const iou_val = document.getElementById("result-train-iou_val")
   const time = document.getElementById("result-train-time")
   const epoch = document.getElementById("result-train-epoch")
+  const imageSegmentation = document.getElementById("image-trained-segmentation")
 
   // Muestra los resultados
   iou_train.textContent = normalizeValue(results?.training_iou ?? "Error de carga", {decimals: 4});
@@ -591,6 +663,8 @@ function showTrainingResultsAndDownload(results, pkl_url) {
   resultsTrainButton.click();
   // Descarga el documento entrenado
   downloadPklByName(pkl_url)
+  // Descarga la imagen de la segmentación entrenada
+  downloadAndShowImage(image_url, imageSegmentation)
 }
 
 /**
@@ -613,6 +687,8 @@ async function startTraining() {
   }
 
   Notiflix.Loading.dots("Entrenando la arquitectura...")
+  const imageSegmentation = document.getElementById("image-trained-segmentation")
+  downloadAndShowImage(null, imageSegmentation)
   if (typeof NProgress?.start === "function") {
     NProgress.start()
     NProgress.set(0)
@@ -733,7 +809,7 @@ async function startTraining() {
     if (!reader) {
       const results = await res.json()
       ensureResultsView()
-      showTrainingResultsAndDownload(results.register, results.pickle_url)
+      showTrainingResultsAndDownload(results.register, results.pickle_url, results.image_url)
       Notiflix.Notify.success("Entrenamiento completado")
       return
     }
@@ -762,9 +838,11 @@ async function startTraining() {
         last_epoch: latestProgress.last_epoch
       }
       if (latestProgress.pickle_url) {
-        showTrainingResultsAndDownload(finalRegister, latestProgress.pickle_url)
+        showTrainingResultsAndDownload(finalRegister, latestProgress.pickle_url, latestProgress.image_url)
       } else {
         updateTrainingMetrics(finalRegister)
+        const imageSegmentation = document.getElementById("image-trained-segmentation")
+        downloadAndShowImage(latestProgress.image_url, imageSegmentation)
       }
       Notiflix.Notify.success("Entrenamiento completado")
       if (typeof NProgress?.done === "function") {
@@ -780,11 +858,14 @@ async function startTraining() {
       "Ocurrió un error al procesar la petición",
       "De acuerdo"
     )
+    downloadAndShowImage(null, imageSegmentation)
   } finally {
     Notiflix.Loading.remove()
     if (typeof NProgress?.done === "function") {
       NProgress.done()
     }
+    // Redimensiona el fondo si es necesario
+    window.dispatchEvent(new Event('resize'));
   }
 }
 
@@ -989,6 +1070,7 @@ const startFormExports = {
   downloadJson,
   downloadPkl,
   downloadPklByName,
+  downloadAndShowImage,
   showTrainingResultsAndDownload,
   startTraining,
   changeTrainingDisplay,

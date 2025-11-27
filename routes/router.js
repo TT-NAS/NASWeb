@@ -13,4 +13,6 @@ router.post("/api/download/pkl", controller.api_get_pkl)
 
 router.get("/api/download/pkl-url/:name", controller.api_get_pkl_by_name)
 
+router.get("/api/download/image", controller.api_get_training_image)
+
 module.exports = router;

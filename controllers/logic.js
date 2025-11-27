@@ -267,4 +267,30 @@ actions.api_get_pkl_by_name = async (req, res) => {
   }
 }
 
+actions.api_get_training_image = async (req, res) => {
+  try {
+    const { url } = req.query
+
+    if (!url) {
+      return res.status(400).json({ error: "URL de imagen inválida" })
+    }
+
+    const response = await fetch(`${API_URL}/image_results/${url}`);
+
+    if (!response.ok) {
+      throw new Error(`Error al descargar imagen: ${response.status}`)
+    }
+
+    const arrayBuffer = await response.arrayBuffer()
+    const contentType = response.headers.get("content-type") || "image/png"
+
+    res.setHeader("Content-Type", contentType)
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate")
+    res.send(Buffer.from(arrayBuffer))
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: "Error al descargar la imagen del entrenamiento" })
+  }
+}
+
 module.exports = actions;
