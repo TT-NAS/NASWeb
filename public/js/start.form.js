@@ -92,11 +92,105 @@ const scheduleNProgressBarElevation = () => {
   })
 }
 
+const queueBackgroundResize = (delays = [150, 350]) => {
+  if (typeof window === "undefined") return
+
+  const execute = () => {
+    if (window.vantaDotsEffect && typeof window.vantaDotsEffect.resize === "function") {
+      window.vantaDotsEffect.resize()
+    } else {
+      window.dispatchEvent(new Event("resize"))
+    }
+  }
+
+  if (typeof requestAnimationFrame === "function") {
+    requestAnimationFrame(execute)
+  } else {
+    execute()
+  }
+
+  delays.forEach((delay) => {
+    setTimeout(execute, delay)
+  })
+}
+
+const hasTrainingMetrics = (payload) => {
+  if (!payload || typeof payload !== "object") return false
+  return [
+    "training_iou",
+    "validation_iou",
+    "training_time",
+    "last_epoch",
+    "epoch",
+    "current_epoch",
+    "progress_epoch"
+  ].some((key) => key in payload)
+}
+
+const unwrapTrainingPayload = (payload) => {
+  if (!payload || typeof payload !== "object") return null
+  let current = payload
+  let guard = 0
+  const unwrapOrder = ["progress", "register", "metrics", "payload", "data"]
+
+  while (current && typeof current === "object" && !hasTrainingMetrics(current) && guard < 6) {
+    const nextKey = unwrapOrder.find((key) => current[key] && typeof current[key] === "object")
+    if (!nextKey) break
+    current = current[nextKey]
+    guard += 1
+  }
+
+  return current && typeof current === "object" ? current : payload
+}
+
+const coerceEpochNumber = (value) => {
+  if (value === null || value === undefined) return null
+  const numeric = Number(value)
+  if (Number.isFinite(numeric)) return numeric
+  if (typeof value === "string") {
+    const parsed = Number.parseFloat(value)
+    if (Number.isFinite(parsed)) return parsed
+  }
+  return null
+}
+
+const collectArtifacts = (...sources) => {
+  const artifacts = {}
+  sources.forEach((src) => {
+    if (!src || typeof src !== "object") return
+    if (typeof src.pickle_url === "string" && src.pickle_url.trim()) {
+      artifacts.pickle_url = src.pickle_url.trim()
+    }
+    if (typeof src.image_url === "string" && src.image_url.trim()) {
+      artifacts.image_url = src.image_url.trim()
+    }
+    if (src.metrics && typeof src.metrics === "object") {
+      if (typeof src.metrics.pickle_url === "string" && src.metrics.pickle_url.trim()) {
+        artifacts.pickle_url = src.metrics.pickle_url.trim()
+      }
+      if (typeof src.metrics.image_url === "string" && src.metrics.image_url.trim()) {
+        artifacts.image_url = src.metrics.image_url.trim()
+      }
+    }
+  })
+  return artifacts
+}
+
 let lastTrainingImageObjectUrl = null
 
 const downloadAndShowImage = async (imageUrl, imgElement) => {
   if (!imgElement) return
   const container = imgElement.closest("[data-trained-image-container]")
+
+  const observeTransition = () => {
+    if (!container) return
+
+    const handleTransitionEnd = () => {
+      queueBackgroundResize()
+    }
+
+    container.addEventListener("transitionend", handleTransitionEnd, { once: true })
+  }
 
   const hideImage = () => {
     if (container) {
@@ -107,6 +201,7 @@ const downloadAndShowImage = async (imageUrl, imgElement) => {
       imgElement.classList.add("d-none")
     }
     imgElement.removeAttribute("src")
+    queueBackgroundResize()
   }
 
   if (!imageUrl) {
@@ -142,6 +237,17 @@ const downloadAndShowImage = async (imageUrl, imgElement) => {
     if (container) {
       container.classList.add("image-visible")
       container.classList.remove("image-hidden")
+      observeTransition()
+    }
+
+    const handleLoad = () => {
+      queueBackgroundResize()
+    }
+
+    if (imgElement.complete && imgElement.naturalWidth) {
+      queueBackgroundResize()
+    } else {
+      imgElement.addEventListener("load", handleLoad, { once: true })
     }
   } catch (error) {
     console.error("No se pudo descargar la imagen del entrenamiento", error)
@@ -153,12 +259,6 @@ const downloadAndShowImage = async (imageUrl, imgElement) => {
       lastTrainingImageObjectUrl = null
     }
     hideImage()
-  }
-  // Redimensiona el fondo si es necesario
-  if (typeof requestAnimationFrame === "function") {
-    requestAnimationFrame(() => window.dispatchEvent(new Event("resize")))
-  } else {
-    window.dispatchEvent(new Event("resize"))
   }
 }
 
@@ -231,7 +331,7 @@ function loadChart(vector = [9,8,7,6,5,4,3,2,1]) {
     }
   });
 
-  window.dispatchEvent(new Event('resize'));
+  queueBackgroundResize();
 }
 
 /**
@@ -626,6 +726,8 @@ function updateTrainingMetrics(progress = {}) {
 
   const latestTrain = extractLatestValue(progress.training_iou)
   const latestVal = extractLatestValue(progress.validation_iou)
+  const epochValue = progress.last_epoch ?? progress.current_epoch ?? progress.epoch ?? progress.progress_epoch
+  const timeValue = progress.training_time ?? progress.elapsed_time ?? progress.total_time
 
   if (iouTrainEl) {
     iouTrainEl.textContent = normalizeValue(latestTrain, { decimals: 4 })
@@ -634,10 +736,10 @@ function updateTrainingMetrics(progress = {}) {
     iouValEl.textContent = normalizeValue(latestVal, { decimals: 4 })
   }
   if (timeEl) {
-    timeEl.textContent = normalizeValue(progress.training_time, { decimals: 2 })
+    timeEl.textContent = normalizeValue(timeValue, { decimals: 2 })
   }
   if (epochEl) {
-    epochEl.textContent = normalizeValue(progress.last_epoch)
+    epochEl.textContent = normalizeValue(epochValue)
   }
 }
 
@@ -665,6 +767,9 @@ function showTrainingResultsAndDownload(results, pkl_url, image_url) {
   downloadPklByName(pkl_url)
   // Descarga la imagen de la segmentación entrenada
   downloadAndShowImage(image_url, imageSegmentation)
+
+  // Redimensiona el fondo si es necesario
+  queueBackgroundResize();
 }
 
 /**
@@ -709,21 +814,34 @@ async function startTraining() {
   }
 
   let latestProgress = null
+  let latestArtifacts = {}
   let resultsViewShown = false
-  let totalEpochs = Number(epochs)
+  const trainingPayload = validation.parsed ? validation.parsed : body
+  let totalEpochs = Number.isFinite(trainingPayload?.epochs) ? Number(trainingPayload.epochs) : Number(epochs)
   let lastReportedEpoch = 0
 
-  const ensureResultsView = () => {
-    if (resultsViewShown) return
+  const showResultsView = () => {
     try {
-      changeTrainingDisplay(trainingPageIsActive, "results")
+      if (trainingPageIsActive) {
+        changeTrainingDisplay(trainingPageIsActive, "results")
+      } else {
+        queueBackgroundResize()
+      }
     } catch (_) {
       if (resultsTrainButton && !resultsTrainButton.classList.contains("active")) {
         resultsTrainButton.click()
       }
+      queueBackgroundResize()
     }
+  }
+
+  const ensureResultsView = () => {
+    if (resultsViewShown) return
+    showResultsView()
     resultsViewShown = true
   }
+
+  showResultsView()
 
   const handleProgressPayload = (payload) => {
     if (!payload || typeof payload !== "object") return
@@ -731,62 +849,67 @@ async function startTraining() {
       throw new Error(payload.error)
     }
 
-    latestProgress = payload
-    ensureResultsView()
-    updateTrainingMetrics(payload)
+    const normalizedPayload = unwrapTrainingPayload(payload)
+    if (!normalizedPayload || typeof normalizedPayload !== "object") {
+      return
+    }
 
-    if (typeof payload.last_epoch === "number" && Notiflix?.Loading?.change) {
-      Notiflix.Loading.change(`Entrenando la arquitectura... (época ${payload.last_epoch})`)
-      const current = Number(payload.last_epoch) || 0
-      if (current !== lastReportedEpoch) {
-        lastReportedEpoch = current
-        const denominator = Number.isFinite(totalEpochs) && totalEpochs > 0 ? totalEpochs : current || 1
-        const normalized = Math.max(0, Math.min(1, current / denominator))
-        if (typeof NProgress?.set === "function") {
-          NProgress.set(normalized)
-        }
+    latestProgress = {
+      ...(latestProgress || {}),
+      ...normalizedPayload
+    }
+
+    const artifactCandidates = collectArtifacts(
+      payload,
+      payload?.payload,
+      payload?.data,
+      payload?.register,
+      payload?.metrics,
+      payload?.progress,
+      normalizedPayload
+    )
+    if (Object.keys(artifactCandidates).length > 0) {
+      latestArtifacts = {
+        ...latestArtifacts,
+        ...artifactCandidates
       }
-    } else if (payload.training_time && Notiflix?.Loading?.change) {
+    }
+
+    ensureResultsView()
+    updateTrainingMetrics(latestProgress)
+
+    const epochCandidate = coerceEpochNumber(
+      normalizedPayload.last_epoch ??
+      normalizedPayload.current_epoch ??
+      normalizedPayload.epoch ??
+      normalizedPayload.progress_epoch ??
+      normalizedPayload.step
+    )
+
+    const timeCandidate = normalizedPayload.training_time ?? normalizedPayload.elapsed_time ?? normalizedPayload.total_time
+
+    if (epochCandidate !== null && Notiflix?.Loading?.change) {
+      const epochSuffix = Number.isFinite(totalEpochs) && totalEpochs > 0
+        ? `/${totalEpochs}`
+        : ""
+      Notiflix.Loading.change(`Entrenando la arquitectura... (época ${epochCandidate}${epochSuffix})`)
+    } else if (timeCandidate !== undefined && Notiflix?.Loading?.change) {
       Notiflix.Loading.change(
-        `Entrenando la arquitectura... (${normalizeValue(payload.training_time, { decimals: 2 })} s)`
+        `Entrenando la arquitectura... (${normalizeValue(timeCandidate, { decimals: 2 })} s)`
       )
     }
-  }
 
-  const processSSEChunk = (chunk, flush = false, emit) => {
-    if (!chunk && !flush) return ""
-    let buffer = (chunk || "").replace(/\r\n/g, "\n")
-    let delimiterIndex = buffer.indexOf("\n\n")
-
-    while (delimiterIndex !== -1) {
-      const rawEvent = buffer.slice(0, delimiterIndex)
-      buffer = buffer.slice(delimiterIndex + 2)
-      emit(rawEvent)
-      delimiterIndex = buffer.indexOf("\n\n")
-    }
-
-    if (flush && buffer.trim()) {
-      emit(buffer.trim())
-      return ""
-    }
-
-    return buffer
-  }
-
-  const handleRawEvent = (rawEvent) => {
-    const dataLines = []
-    for (const line of rawEvent.split("\n")) {
-      if (line.startsWith("data:")) {
-        dataLines.push(line.slice(5).trim())
+    if (epochCandidate !== null) {
+      const currentEpoch = epochCandidate
+      latestProgress.last_epoch = currentEpoch
+      if (currentEpoch !== lastReportedEpoch) {
+        lastReportedEpoch = currentEpoch
+        const denominator = Number.isFinite(totalEpochs) && totalEpochs > 0 ? totalEpochs : currentEpoch || 1
+        const normalizedProgress = Math.max(0, Math.min(1, currentEpoch / denominator))
+        if (typeof NProgress?.set === "function") {
+          NProgress.set(normalizedProgress)
+        }
       }
-    }
-    if (!dataLines.length) return
-    const payloadText = dataLines.join("\n")
-    try {
-      const parsed = JSON.parse(payloadText)
-      handleProgressPayload(parsed)
-    } catch (err) {
-      console.error("No se pudo analizar el evento de entrenamiento:", payloadText, err)
     }
   }
 
@@ -794,7 +917,7 @@ async function startTraining() {
     const res = await fetch("/api/train", {
       method: "post",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
+      body: JSON.stringify(trainingPayload)
     })
 
     if (!res.ok) {
@@ -817,33 +940,68 @@ async function startTraining() {
     const decoder = new TextDecoder("utf-8")
     let buffer = ""
 
+    const handleStreamLine = (line) => {
+      const trimmed = (line || "").trim()
+      if (!trimmed) return
+
+      const payloadText = trimmed.startsWith("data:")
+        ? trimmed.slice(5).trim()
+        : trimmed
+
+      if (!payloadText) return
+
+      try {
+        const parsed = JSON.parse(payloadText)
+        handleProgressPayload(parsed)
+      } catch (err) {
+        console.error("No se pudo analizar la línea del stream de entrenamiento:", payloadText, err)
+      }
+    }
+
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
       if (!value) continue
 
       buffer += decoder.decode(value, { stream: true })
-      buffer = processSSEChunk(buffer, false, handleRawEvent)
+      buffer = buffer.replace(/\r\n/g, "\n")
+
+      const lines = buffer.split("\n")
+      buffer = lines.pop() || ""
+
+      for (const line of lines) {
+        handleStreamLine(line)
+      }
     }
 
     buffer += decoder.decode()
-    buffer = processSSEChunk(buffer, true, handleRawEvent)
+    buffer = buffer.replace(/\r\n/g, "\n")
+    if (buffer.trim()) {
+      handleStreamLine(buffer)
+    }
 
     if (latestProgress) {
       ensureResultsView()
       const finalRegister = {
         training_iou: extractLatestValue(latestProgress.training_iou),
         validation_iou: extractLatestValue(latestProgress.validation_iou),
-        training_time: latestProgress.training_time,
-        last_epoch: latestProgress.last_epoch
+        training_time: latestProgress.training_time ?? latestProgress.elapsed_time ?? latestProgress.total_time,
+        last_epoch: latestProgress.last_epoch ?? latestProgress.current_epoch ?? latestProgress.epoch
       }
-      if (latestProgress.pickle_url) {
-        showTrainingResultsAndDownload(finalRegister, latestProgress.pickle_url, latestProgress.image_url)
+
+      const resolvedPickleUrl = latestArtifacts.pickle_url ?? latestProgress.pickle_url
+      const resolvedImageUrl = latestArtifacts.image_url ?? latestProgress.image_url
+
+      if (resolvedPickleUrl) {
+        showTrainingResultsAndDownload(finalRegister, resolvedPickleUrl, resolvedImageUrl)
       } else {
         updateTrainingMetrics(finalRegister)
-        const imageSegmentation = document.getElementById("image-trained-segmentation")
-        downloadAndShowImage(latestProgress.image_url, imageSegmentation)
+        if (resolvedImageUrl) {
+          const imageSegmentation = document.getElementById("image-trained-segmentation")
+          downloadAndShowImage(resolvedImageUrl, imageSegmentation)
+        }
       }
+
       Notiflix.Notify.success("Entrenamiento completado")
       if (typeof NProgress?.done === "function") {
         NProgress.done()
@@ -865,7 +1023,7 @@ async function startTraining() {
       NProgress.done()
     }
     // Redimensiona el fondo si es necesario
-    window.dispatchEvent(new Event('resize'));
+    queueBackgroundResize();
   }
 }
 
@@ -888,7 +1046,7 @@ function changeTrainingDisplay(trainingIsActive, toActive) {
     if (resultsTrainButton) {
       resultsTrainButton.classList.toggle("active")
     }
-    window.dispatchEvent(new Event('resize'));
+    queueBackgroundResize();
 
     trainingPageIsActive = false
   } else if (toActive === "parameters" && !trainingIsActive) {
@@ -905,7 +1063,7 @@ function changeTrainingDisplay(trainingIsActive, toActive) {
     if (resultsTrainButton) {
       resultsTrainButton.classList.toggle("active")
     }
-    window.dispatchEvent(new Event('resize'));
+    queueBackgroundResize();
 
     trainingPageIsActive = true
   }
@@ -930,7 +1088,7 @@ function changeViewsNav(animationIsActive, toActive) {
     if (navButtonChart) {
       navButtonChart.classList.toggle("active")
     }
-    window.dispatchEvent(new Event('resize'));
+    queueBackgroundResize();
 
     animationPageIsActive = true
   } else if (toActive === "chart" && animationIsActive) {
@@ -947,7 +1105,7 @@ function changeViewsNav(animationIsActive, toActive) {
     if (navButtonChart) {
       navButtonChart.classList.toggle("active")
     }
-    window.dispatchEvent(new Event('resize'));
+    queueBackgroundResize();
 
     animationPageIsActive = false
   }
@@ -1056,7 +1214,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Resize
-    window.dispatchEvent(new Event('resize'));
+    queueBackgroundResize();
   })();
 });
 

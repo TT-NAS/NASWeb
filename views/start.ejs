@@ -113,8 +113,7 @@
             <p><i class="bi bi-info-circle" role="button" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Índice IoU (validación)" data-bs-content="Coincidencia entre la segmentación generada en validación y la máscara real del conjunto de validación."></i> IOU de validación: <span id="result-train-iou_val">--</span></p>
             <p>Tiempo de entrenamiento: <span id="result-train-time">--</span> s</p>
             <p>Epoca alcanzada: <span id="result-train-epoch">--</span></p>
-            <div class="mt-3 training-image-wrapper image-hidden" data-trained-image-container>
-              <p class="mb-1 text-muted small">Segmentación generada:</p>
+            <div class="training-image-wrapper image-hidden" data-trained-image-container>
               <img src="" alt="Segmentación entrenada" class="img-fluid rounded-3 shadow-sm border border-1 d-none" id="image-trained-segmentation">
             </div>
           </div>
@@ -128,7 +127,11 @@
 <script src="https://cdn.jsdelivr.net/npm/vanta@0.5.24/dist/vanta.dots.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/vanta@0.5.24/dist/vanta.net.min.js"></script>
 <script>
-  VANTA.DOTS({
+  if (window?.vantaDotsEffect && typeof window.vantaDotsEffect.destroy === "function") {
+    window.vantaDotsEffect.destroy()
+  }
+
+  window.vantaDotsEffect = VANTA.DOTS({
     el: "#body",
     mouseControls: false,
     touchControls: false,

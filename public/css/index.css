@@ -206,23 +206,28 @@ input[type="number"].form-control {
 }
 
 .training-image-wrapper {
-  min-height: 280px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  transition: opacity 0.2s ease, visibility 0.2s ease;
-}
-
-.training-image-wrapper.image-hidden {
+  overflow: hidden;
+  max-height: 0;
   opacity: 0;
-  visibility: hidden;
+  margin-top: 0;
+  transition: max-height 0.25s ease, opacity 0.25s ease, margin-top 0.25s ease;
 }
 
 .training-image-wrapper.image-visible {
+  max-height: 420px;
   opacity: 1;
-  visibility: visible;
+  margin-top: 1rem;
+}
+
+.training-image-wrapper.image-hidden {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
 }
 
 .training-image-wrapper img {

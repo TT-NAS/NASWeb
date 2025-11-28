@@ -24,7 +24,8 @@
     "leader-line": "^1.0.8",
     "morgan": "^1.10.1",
     "nodemon": "^3.1.10",
-    "notiflix": "^3.2.8"
+    "notiflix": "^3.2.8",
+    "undici": "^7.16.0"
   },
   "devDependencies": {
     "jest": "^30.2.0",

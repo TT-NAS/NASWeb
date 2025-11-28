@@ -6,6 +6,7 @@
 
 const actions = {}
 const API_URL = "http://127.0.0.1:8000"
+const TRAINING_FETCH_TIMEOUT_MS = 40 * 60 * 1000
 
 // Importar funciones de validación
 const {
@@ -111,11 +112,20 @@ actions.api_train = async (req, res) => {
       return res.status(400).json({ error: 'Validation failed', details: validation.errors })
     }
 
-    const response = await fetch(`${API_URL}/train`, {
-      method: "post",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    })
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), TRAINING_FETCH_TIMEOUT_MS)
+
+    let response
+    try {
+      response = await fetch(`${API_URL}/train`, {
+        method: "post",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal: controller.signal
+      })
+    } finally {
+      clearTimeout(timeoutId)
+    }
 
     if (!response.ok) {
       const fallback = await response.text().catch(() => "")
@@ -127,6 +137,7 @@ actions.api_train = async (req, res) => {
     res.setHeader("Cache-Control", "no-cache")
     res.setHeader("Connection", "keep-alive")
     res.setHeader("Transfer-Encoding", "chunked")
+    res.setHeader("X-Accel-Buffering", "no")
     if (typeof res.flushHeaders === "function") {
       res.flushHeaders()
     }
@@ -142,22 +153,47 @@ actions.api_train = async (req, res) => {
     }
 
     const decoder = new TextDecoder("utf-8")
+    let buffer = ""
+
+    const forwardEvent = (rawEvent) => {
+      const trimmed = rawEvent.trim()
+      if (!trimmed) return
+
+      let payload
+      if (trimmed.startsWith("data:")) {
+        payload = trimmed
+      } else if (trimmed.startsWith(":")) {
+        payload = trimmed
+      } else {
+        payload = `data: ${trimmed}`
+      }
+      res.write(`${payload}\n\n`)
+      if (typeof res.flush === "function") {
+        res.flush()
+      }
+    }
 
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
-
       if (!value) continue
 
-      const chunk = decoder.decode(value, { stream: true })
-      if (chunk) {
-        res.write(chunk)
+      buffer += decoder.decode(value, { stream: true })
+      buffer = buffer.replace(/\r\n/g, "\n")
+
+      let delimiterIndex = buffer.indexOf("\n\n")
+      while (delimiterIndex !== -1) {
+        const rawEvent = buffer.slice(0, delimiterIndex)
+        buffer = buffer.slice(delimiterIndex + 2)
+        forwardEvent(rawEvent)
+        delimiterIndex = buffer.indexOf("\n\n")
       }
     }
 
-    const finalChunk = decoder.decode()
-    if (finalChunk) {
-      res.write(finalChunk)
+    buffer += decoder.decode()
+    buffer = buffer.replace(/\r\n/g, "\n")
+    if (buffer.trim()) {
+      forwardEvent(buffer)
     }
 
     return res.end()
