@@ -995,7 +995,7 @@ function startLoop() {
     }, intervalMs);
 }
 
-// 👉 Función para detener el loop
+// Función para detener el loop
 function stopLoop() {
     if (loopId !== null) {
         clearInterval(loopId);

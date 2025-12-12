@@ -39,6 +39,7 @@ const resultSearchTime = document.getElementById("result-search-time")
 const resultGeneration = document.getElementById("result-generation")
 const resultStopReason = document.getElementById("result-stop-reason")
 const selectSearchAlgorithm = document.getElementById("select-algorithm-search")
+const selectDataset = document.getElementById("select-dataset-search")
 // download
 const downloadButton = document.getElementById("button-download")
 const downloadJsonButton = document.getElementById("a-download-json")
@@ -379,6 +380,8 @@ async function showArchitecture() {
  */
 const startSearch = async () => {
   // Obtener valores de los inputs
+  const algorithm = selectSearchAlgorithm.value;
+  const dataset = selectDataset.value;
   const population_size = Number(document.getElementById("range-population-size").value.trim());
   const f = Number(document.getElementById("range-f").value.trim());
   const crossover_rate = Number(document.getElementById("range-crossover").value.trim());
@@ -386,13 +389,18 @@ const startSearch = async () => {
   const generations = Number(document.getElementById("range-generations").value.trim());
 
   const body = {
-    population_size,
-    f,
+    algorithm,
+    dataset,
+    n_pop: population_size,
     crossover_rate,
-    mutation_rate,
-    generations
+    max_gen: generations
   }
-  //console.log(body);
+  // si el algoritmo es diferencial agrega f si es genetico agrega mutation rate
+  if (algorithm === "de") {
+    body.f = f
+  } else if (algorithm === "ga") {
+    body.mutation_rate = mutation_rate
+  }
   // Validar parámetros antes de enviar
   const validation = await runValidation(validateSearchParams, body)
   if (!validation.isValid) return reportValidationErrors(validation)

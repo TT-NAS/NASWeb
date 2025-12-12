@@ -28,6 +28,7 @@ actions.api_search = async (req, res) => {
     // agregar validación
     const validation = await runValidation(validateSearchParams, body)
     if (!validation.isValid) {
+      console.error("Errores de validación en api_search:", validation.errors)
       // devolver errores al cliente con 400
       return res.status(400).json({ error: 'Validation failed', details: validation.errors })
     }

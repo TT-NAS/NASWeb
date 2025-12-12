@@ -41,11 +41,11 @@ function validateSearchParams(body) {
 
   // Campos esperados
   const fields = [
-    'population_size',
-    'f',
+    'n_pop',
+    //'f', // opcional según algoritmo
     'crossover_rate',
-    'mutation_rate',
-    'generations'
+    //'mutation_rate', // opcional según algoritmo
+    'max_gen'
   ]
 
   // Check presence
@@ -61,18 +61,20 @@ function validateSearchParams(body) {
   }
 
   // Validaciones por campo
-  // population_size -> entero positivo (>=2)
-  if (!isPositiveInteger(body.population_size) || Number(body.population_size) < 2) {
-    errors.population_size = 'population_size debe ser un entero >= 2'
+  // n_pop -> entero positivo (>=2)
+  if (!isPositiveInteger(body.n_pop) || Number(body.n_pop) < 2) {
+    errors.n_pop = 'n_pop debe ser un entero >= 2'
   }
 
   // f -> número real > 0 (acepta decimales)
-  if (!isNum(body.f) || Number(body.f) <= 0) {
+  if (!isNum(body?.f ?? 0.1) || Number(body?.f ?? 0.1) <= 0) {
+    console.log("FF: ", body?.f);
     errors.f = 'f debe ser un número > 0'
   }
 
   // f -> [0,1]
-  if (!isBetween(body.f, 0, 1)) {
+  if (!isBetween(body?.f ?? 0.1, 0, 1)) {
+    console.log(body?.f);
     errors.f = 'f debe estar entre 0 y 1'
   }
 
@@ -82,13 +84,13 @@ function validateSearchParams(body) {
   }
 
   // mutation_rate -> [0,1]
-  if (!isBetween(body.mutation_rate, 0, 1)) {
+  if (!isBetween(body?.mutation_rate ?? 0.1, 0, 1)) {
     errors.mutation_rate = 'mutation_rate debe estar entre 0 y 1'
   }
 
-  // generations -> entero positivo
-  if (!isPositiveInteger(body.generations) || Number(body.generations) < 1) {
-    errors.generations = 'generations debe ser un entero >= 1'
+  // max_gen -> entero positivo
+  if (!isPositiveInteger(body.max_gen) || Number(body.max_gen) < 1) {
+    errors.max_gen = 'max_gen debe ser un entero >= 1'
   }
 
   if (Object.keys(errors).length > 0) {
@@ -97,11 +99,11 @@ function validateSearchParams(body) {
 
   // Si todo ok, devolver datos parseados (números)
   const parsed = {
-    population_size: Number(body.population_size),
+    n_pop: Number(body.n_pop),
     f: Number(body.f),
     crossover_rate: Number(body.crossover_rate),
     mutation_rate: Number(body.mutation_rate),
-    generations: Number(body.generations)
+    max_gen: Number(body.max_gen)
   }
 
   return { isValid: true, errors: null, parsed }
