@@ -21,17 +21,33 @@
         </div>
 
         <div class="card p-4 glass-card mt-4">
-          <!-- Grid in card -->
+          <!-- Parámetros -->
           <div class="col-md">
             <div>
+              <div class="mb-2">
+                <label for="select-dataset-search"><i class="bi bi-info-circle" role="button" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Conjunto de datos" data-bs-content="Conjunto de datos sobre el que se va a realizar la búsqueda"></i> Seleccionar conjunto de datos: </label>
+                <select name="dataset" id="select-dataset-search" class="form-select">
+                  <option value="road" default>Caminos</option>
+                  <option value="carvana">Carros</option>
+                </select>
+              </div>
+
+              <div class="mb-2">
+                <label for="select-algorithm-search"><i class="bi bi-info-circle" role="button" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Algoritmo de búsqueda" data-bs-content="Seleccione el algoritmo que se utilizará para la búsqueda."></i> Seleccionar algoritmo: </label>
+                <select name="dataset" id="select-algorithm-search" class="form-select">
+                  <option value="de" default>Diferencial</option>
+                  <option value="ga">Genética</option>
+                </select>
+              </div>
+
               <div class="">
                 <label for="range-population-size" class="form-label"><i class="bi bi-info-circle" role="button" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Tamaño de la población" data-bs-content="Cantidad de individuos que se evalúan en cada generación del algoritmo."></i> Tamaño de la población: <output for="range-population-size" id="range-population-size-value" aria-hidden="true"></output></label>
                 <input type="range" class="form-range" min="0" max="100" value="50" id="range-population-size">
               </div>
 
               <div class="">
-                  <label for="range-f" class="form-label"><i class="bi bi-info-circle" role="button" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Factor de mutación (F)" data-bs-content="Escala la diferencia entre candidatos para generar nuevas soluciones; valores altos exploran más el espacio."></i> F: <output for="range-f" id="range-f-value" aria-hidden="true"></output></label>
-                <input type="range" class="form-range" min="0" max="1" step="0.01" value="0.5" id="range-f">
+                  <label for="range-generations" class="form-label"><i class="bi bi-info-circle" role="button" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Generaciones" data-bs-content="Número máximo de iteraciones que ejecutará el algoritmo diferencial en la búsqueda."></i> Generaciones: <output for="range-generations" id="range-generations-value" aria-hidden="true"></output></label>
+                <input type="range" class="form-range" min="1" max="1000" value="100" id="range-generations">
               </div>
 
               <div class="">
@@ -39,14 +55,14 @@
                 <input type="range" class="form-range" min="0" max="1" step="0.01" value="0.5" id="range-crossover">
               </div>
 
-              <div class="">
-                  <label for="range-mutation" class="form-label"><i class="bi bi-info-circle" role="button" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Tasa de mutación" data-bs-content="Probabilidad de alterar genes individuales en los vectores; ayuda a evitar mínimos locales."></i> Tasa de mutación: <output for="range-mutation" id="range-mutation-value" aria-hidden="true"></output></label>
-                <input type="range" class="form-range" min="0" max="1" step="0.01" value="0.01" id="range-mutation">
+              <div class="" id="input-f-search">
+                  <label for="range-f" class="form-label"><i class="bi bi-info-circle" role="button" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Factor de mutación (F)" data-bs-content="Escala la diferencia entre candidatos para generar nuevas soluciones; valores altos exploran más el espacio."></i> F: <output for="range-f" id="range-f-value" aria-hidden="true"></output></label>
+                <input type="range" class="form-range" min="0" max="1" step="0.01" value="0.5" id="range-f">
               </div>
 
-              <div class="">
-                  <label for="range-generations" class="form-label"><i class="bi bi-info-circle" role="button" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Generaciones" data-bs-content="Número máximo de iteraciones que ejecutará el algoritmo diferencial en la búsqueda."></i> Generaciones: <output for="range-generations" id="range-generations-value" aria-hidden="true"></output></label>
-                <input type="range" class="form-range" min="1" max="1000" value="100" id="range-generations">
+              <div class="" id="input-mutation-rate">
+                  <label for="range-mutation" class="form-label"><i class="bi bi-info-circle" role="button" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Tasa de mutación" data-bs-content="Probabilidad de alterar genes individuales en los vectores; ayuda a evitar mínimos locales."></i> Tasa de mutación: <output for="range-mutation" id="range-mutation-value" aria-hidden="true"></output></label>
+                <input type="range" class="form-range" min="0" max="1" step="0.01" value="0.01" id="range-mutation">
               </div>
 
               <div class="d-grid gap-2">

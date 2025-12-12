@@ -38,6 +38,7 @@ const resultIou = document.getElementById("result-iou")
 const resultSearchTime = document.getElementById("result-search-time")
 const resultGeneration = document.getElementById("result-generation")
 const resultStopReason = document.getElementById("result-stop-reason")
+const selectSearchAlgorithm = document.getElementById("select-algorithm-search")
 // download
 const downloadButton = document.getElementById("button-download")
 const downloadJsonButton = document.getElementById("a-download-json")
@@ -1154,9 +1155,28 @@ function loadFile() {
   lector.readAsText(file)
 }
 
+/**
+ * Detecta el cambio de algoritmo de búsqueda y muestra/oculta los parámetros de búsqueda correspondientes
+ * (factor f o tasa de mutación)
+ * @param {Object} event Evento
+ */
+function changeSearchParamsVisibility(event) {
+  let algorithm = event.target.value;
+    let f = document.getElementById("input-f-search");
+    let mutation_rate = document.getElementById("input-mutation-rate");
+    // si algoritmo == de entonces desactiva mutation_rate sino desactiva f
+    if (algorithm === "de") {
+      mutation_rate.style.display = "none";
+      f.style.display = "block";
+    } else {
+      mutation_rate.style.display = "block";
+      f.style.display = "none";
+    }
+}
+
 let animationPageIsActive = true
 let trainingPageIsActive = true
-// Reactions
+// ------------------- Reactions ----------------------
 if (start_button) {
   start_button.addEventListener("click", () => startSearch())
 }
@@ -1187,6 +1207,9 @@ if (navButtonChart) {
 if (downloadPklButton) {
   downloadPklButton.addEventListener("click", () => downloadPkl())
 }
+if (selectSearchAlgorithm) {
+  selectSearchAlgorithm.addEventListener("change", (event) => changeSearchParamsVisibility(event));
+}
 
 // Eleva la tarjeta de resultados cuando su dropdown está abierto para evitar que quede oculta.
 document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach((toggle) => {
@@ -1212,6 +1235,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (canvasChart) {
       canvasChart.style.display = "none";
     }
+
+    // Set initial search params visibility
+    let f = document.getElementById("input-f-search");
+    let mutation_rate = document.getElementById("input-mutation-rate");
+
+    mutation_rate.style.display = "none";
+    f.style.display = "block";
 
     // Resize
     queueBackgroundResize();

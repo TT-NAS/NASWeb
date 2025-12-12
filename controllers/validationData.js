@@ -102,8 +102,8 @@ function validateSearchParams(body) {
   }
 
   // f -> número real > 0 (acepta decimales)
-  if (!isNum(body.f) || Number(body.f) <= 0) {
-    errors.f = 'f debe ser un número > 0'
+  if (!isNum(body.f) || Number(body.f) <= 0 || Number(body.f) < 0.1) {
+    errors.f = 'f debe ser un número > = 0.1'
   }
 
   // crossover_rate -> [0,1]
