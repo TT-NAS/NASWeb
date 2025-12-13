@@ -96,15 +96,21 @@ function validateSearchParams(body) {
   }
 
   // Validaciones por campo
-  // n_pop -> entero positivo (>=2)
-  if (!isPositiveInteger(body.n_pop) || Number(body.n_pop) < 2) {
-    errors.n_pop = 'n_pop debe ser un entero >= 2'
+  // n_pop -> entero positivo (>=2 && <=1000)
+  if (!isPositiveInteger(body.n_pop) || Number(body.n_pop) < 2 || Number(body.n_pop) > 1000) {
+    errors.n_pop = 'n_pop debe ser un entero >= 2 y <= 1000'
   }
 
   // f -> número real > 0 (acepta decimales)
-  if (!isNum(body?.f ?? 0.1) || Number(body?.f ?? 0.1) <= 0 || Number(body?.f ?? 0.1) < 0.1) {
+  if (!isNum(body?.f ?? 0.1) || Number(body?.f ?? 0.1) <= 0) {
     console.log(body?.f);
     errors.f = 'f debe ser un número > = 0.1'
+  }
+
+  // f -> [0,1]
+  if (!isBetween(body?.f ?? 0.1, 0.1, 1)) {
+    console.log(body?.f);
+    errors.f = 'f debe estar entre 0.1 y 1'
   }
 
   // crossover_rate -> [0,1]
@@ -119,8 +125,8 @@ function validateSearchParams(body) {
   }
 
   // max_gen -> entero positivo
-  if (!isPositiveInteger(body.max_gen) || Number(body.max_gen) < 1) {
-    errors.max_gen = 'max_gen debe ser un entero >= 1'
+  if (!isPositiveInteger(body.max_gen) || Number(body.max_gen) < 2) {
+    errors.max_gen = 'max_gen debe ser un entero >= 2'
   }
 
   if (Object.keys(errors).length > 0) {

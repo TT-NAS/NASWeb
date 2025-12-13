@@ -410,6 +410,7 @@ const startSearch = async () => {
   window.scrollTo({ top: 0, behavior: "smooth" });
   // Muestra el cambio de arquitecturas
   startLoop()
+  navButtonArchitecture.click()
   if (downloadButton) downloadButton.disabled = true
   if (trainingButton) trainingButton.disabled = true
 
