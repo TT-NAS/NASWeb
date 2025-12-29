@@ -153,8 +153,8 @@ function validateTrainingParams(body) {
   }
 
   // epochs -> entero positivo
-  if (!isPositiveInteger(body.epochs) || isBetween(body.epochs, 1, 20) === false) {
-    errors.epochs = 'epochs debe ser un entero positivo entre 1 y 20'
+  if (!isPositiveInteger(body.epochs) || isBetween(body.epochs, 1, 30) === false) {
+    errors.epochs = 'epochs debe ser un entero positivo entre 1 y 30'
   }
 
   // chromosome -> array u objeto (no se valida más aquí)

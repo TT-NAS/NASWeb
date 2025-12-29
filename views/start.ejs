@@ -4,7 +4,7 @@
 
   <link rel="stylesheet" href="/css/animation.css">
 
-  <div class="container py-5">
+  <div class="container pb-5 pt-1">
     <div class="row">
       <div class="col-md-8">
         <!-- Animation card -->
@@ -47,7 +47,7 @@
 
               <div class="">
                   <label for="range-generations" class="form-label"><i class="bi bi-info-circle" role="button" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Generaciones" data-bs-content="Número máximo de iteraciones que ejecutará el algoritmo diferencial en la búsqueda."></i> Generaciones: <output for="range-generations" id="range-generations-value" aria-hidden="true"></output></label>
-                <input type="range" class="form-range" min="2" max="100" value="10" id="range-generations">
+                <input type="range" class="form-range" min="2" max="100" value="50" id="range-generations">
               </div>
 
               <div class="">
@@ -56,7 +56,7 @@
               </div>
 
               <div class="" id="input-f-search">
-                  <label for="range-f" class="form-label"><i class="bi bi-info-circle" role="button" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Factor de mutación (F)" data-bs-content="Escala la diferencia entre candidatos para generar nuevas soluciones; valores altos exploran más el espacio."></i> F: <output for="range-f" id="range-f-value" aria-hidden="true"></output></label>
+                  <label for="range-f" class="form-label"><i class="bi bi-info-circle" role="button" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Factor de escala (F)" data-bs-content="Escala la diferencia entre candidatos para generar nuevas soluciones; valores altos exploran más el espacio."></i> F: <output for="range-f" id="range-f-value" aria-hidden="true"></output></label>
                 <input type="range" class="form-range" min="0.1" max="1" step="0.01" value="0.5" id="range-f">
               </div>
 
@@ -78,7 +78,9 @@
         <div class="card glass-card p-4">
           <span class="fs-4">Resultados de la búsqueda</span>
           <hr>
-          <p><i class="bi bi-info-circle" role="button" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Índice IoU" data-bs-content="Intersección sobre Unión: mide la coincidencia entre la predicción segmentada y la máscara real."></i> IOU: <span id="result-iou">--</span></p>
+          <p><i class="bi bi-info-circle" role="button" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Índice IoU (predicho)" data-bs-content="Intersección sobre Unión: mide la coincidencia entre la predicción segmentada y la máscara real."></i> IOU predicho: <span id="result-iou">--</span></p>
+          <p><i class="bi bi-info-circle" role="button" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Aptitud" data-bs-content="Es la eficiencia que mide la relación entre la cantidad de parámetros y el IoU del modelo."></i> Aptitud: <span id="result-fitness">--</span></p>
+          <p><i class="bi bi-info-circle" role="button" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Número de parámetros" data-bs-content="Cantidad total de parámetros de la arquitectura."></i> Número de parámetros: <span id="result-params">--</span></p>
           <p>Tiempo de búsqueda: <span id="result-search-time">--</span> s</p>
           <p>Generación alcanzada: <span id="result-generation">--</span></p>
           <p>Razón de detenimiento: <span id="result-stop-reason">--</span></p>
@@ -107,16 +109,16 @@
               <label for="form-label">Seleccionar conjunto de datos: </label>
               <select name="dataset" id="select-dataset" class="form-select">
                 <option value="road" default>Caminos</option>
-                <option value="car">Carros</option>
+                <option value="carvana">Carros</option>
               </select>
             </div>
             <div class="mb-1">
               <label for="" class="form-label">Tamaño del dataset:</label>
-              <input type="number" value="100" class="form-control" min="10" max="1000" step="100" id="number-dataset-size">
+              <input type="number" value="100" class="form-control" min="10" max="5088" step="100" id="number-dataset-size">
             </div>
             <div class="mb-1">
               <label for="" class="form-label">Epocas:</label>
-              <input type="number" class="form-control" min="1" max="35" value="2" id="number-epochs">
+              <input type="number" class="form-control" min="1" max="30" value="2" id="number-epochs">
             </div>
             <div class="d-grid gap-2 mt-3">
               <button class="btn btn-primary" id="button-training" disabled>Entrenar arquitectura</button>
@@ -125,7 +127,7 @@
             </div>
           </div>
           <div class="" id="container-train-results">
-            <p><i class="bi bi-info-circle" role="button" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Índice IoU (train)" data-bs-content="Coincidencia entre la segmentación generada durante el entrenamiento y el objetivo esperado."></i> IOU de entrenamiento: <span id="result-train-iou">--</span></p>
+            <p><i class="bi bi-info-circle" role="button" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Índice IoU (entrenamiento)" data-bs-content="Coincidencia entre la segmentación generada durante el entrenamiento y el objetivo esperado."></i> IOU de entrenamiento: <span id="result-train-iou">--</span></p>
             <p><i class="bi bi-info-circle" role="button" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Índice IoU (validación)" data-bs-content="Coincidencia entre la segmentación generada en validación y la máscara real del conjunto de validación."></i> IOU de validación: <span id="result-train-iou_val">--</span></p>
             <p>Tiempo de entrenamiento: <span id="result-train-time">--</span> s</p>
             <p>Epoca alcanzada: <span id="result-train-epoch">--</span></p>

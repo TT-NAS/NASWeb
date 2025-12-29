@@ -38,6 +38,8 @@ const resultIou = document.getElementById("result-iou")
 const resultSearchTime = document.getElementById("result-search-time")
 const resultGeneration = document.getElementById("result-generation")
 const resultStopReason = document.getElementById("result-stop-reason")
+const resultFitness = document.getElementById("result-fitness")
+const resultParams = document.getElementById("result-params")
 const selectSearchAlgorithm = document.getElementById("select-algorithm-search")
 const selectDataset = document.getElementById("select-dataset-search")
 // download
@@ -291,12 +293,20 @@ const normalizeValue = (value, { decimals } = {}) => {
 const renderResults = (payload = {}, { preserveExisting = false } = {}) => {
   const source = payload?.results ?? payload ?? {}
   const metrics = {
+    fitness: source?.fitness,
+    params: source?.num_params,
     iou: source?.predicted_iou ?? source?.iou,
     search_time: source?.search_time,
     generation: source?.stop_gen ?? source?.generation,
     stop_reason: source?.stop_reason
   }
 
+  if (resultFitness && (!preserveExisting || metrics.fitness !== undefined)) {
+    resultFitness.textContent = normalizeValue(metrics.fitness, { decimals: 4 })
+  }
+  if (resultParams && (!preserveExisting || metrics.params !== undefined)) {
+    resultParams.textContent = normalizeValue(metrics.params)
+  }
   if (resultIou && (!preserveExisting || metrics.iou !== undefined)) {
     resultIou.textContent = normalizeValue(metrics.iou, { decimals: 4 })
   }
