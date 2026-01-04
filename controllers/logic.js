@@ -7,6 +7,7 @@
 const actions = {}
 const API_URL = "http://127.0.0.1:8000"
 const TRAINING_FETCH_TIMEOUT_MS = 40 * 60 * 1000
+const { Agent } = require("undici")
 
 // Importar funciones de validación
 const {
@@ -113,6 +114,7 @@ actions.api_train = async (req, res) => {
       return res.status(400).json({ error: 'Validation failed', details: validation.errors })
     }
 
+    const agent = new Agent({ headersTimeout: 0, bodyTimeout: 0 })
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), TRAINING_FETCH_TIMEOUT_MS)
 
@@ -122,7 +124,8 @@ actions.api_train = async (req, res) => {
         method: "post",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
-        signal: controller.signal
+        signal: controller.signal,
+        dispatcher: agent
       })
     } finally {
       clearTimeout(timeoutId)
