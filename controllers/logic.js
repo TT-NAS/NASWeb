@@ -5,7 +5,7 @@
  */
 
 const actions = {}
-const API_URL = "http://127.0.0.1:8000"
+const API_URL = "http://35.209.225.231/:8000"  // El firewall bloquea peticiones que no son de la web
 const TRAINING_FETCH_TIMEOUT_MS = 40 * 60 * 1000
 const { Agent } = require("undici")
 
