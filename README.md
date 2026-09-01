@@ -86,7 +86,7 @@ Before running the project, make sure you have installed:
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone git@github.com:TT-NAS/NASWeb.git
 
 # Navigate to the project
 cd NASWeb
