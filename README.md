@@ -265,4 +265,4 @@ Related Paper: [An Evolutionary Neural Architecture Search Approach with Visual 
 
 ---
 
-This README is designed so that anyone can install, run, and understand the logic of NASWeb without needing to review the entire source code. If you wish, I can also prepare a shorter version for GitHub with a more commercial style focused on the public demo of the project.
+This README is designed so that anyone can install, run, and understand the logic of NASWeb without needing to review the entire source code.
